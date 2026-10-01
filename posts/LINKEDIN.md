@@ -165,3 +165,32 @@ You can click around in all three. Link in the comments.
 Which one should I break down next?
 
 #cybersecurity #networking #DARPA #SecurityPlus #SOC #blueteam
+
+---
+
+## 09 · X-style thread / LinkedIn post: Assume the backbone is compromised
+Upload `media/mosaic-short.mp4`. First comment: https://n1ghtsh1ft1.github.io/signal-and-noise/darpa.html#mosaic
+
+Assume the backbone is compromised.
+
+That's the design rule behind DARPA's MINC program: build networks that keep data moving when the main infrastructure is jammed, cut or gone.
+
+So I built two versions of the same network and attacked both:
+
+1/ Static network: one fixed path over fiber. Cut the fiber and every packet after that dies right there.
+
+2/ Mosaic network: it treats every link it can find (fiber, radio, LTE, satellite) as a tile, and picks a new path the moment one breaks.
+
+3/ Fiber cut → it reroutes over radio.
+Radio jammed → it switches to LTE.
+Fiber fixed → it goes back to the fast path.
+
+4/ The static network lost every packet while the fiber was down. The mosaic one never stopped delivering.
+
+5/ You don't need a military budget for this. A second ISP, a cellular failover link and a routing protocol that reconverges is the same idea for a small business.
+
+I also wrote a small Python tool that runs the same test and checks the message arrives byte for byte (sequence numbers + SHA-256). Code and a beginner diagram are on my GitHub.
+
+Where's the single point of failure in your network?
+
+#networking #cybersecurity #DARPA #resilience #SOC #CCNA
