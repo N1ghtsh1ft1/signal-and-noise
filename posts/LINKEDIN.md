@@ -100,3 +100,41 @@ Which stop do you think causes the most problems in real life?
 - **Comment first.** Drop the GitHub link to the live version in the first comment, not in the post (posts with links get shown to fewer people).
 - **Reply fast.** Answer every comment in the first hour, and ask a follow-up question back.
 - **Pin it.** Add the best post plus the GitHub repo to your Featured section, so recruiters see it first.
+
+---
+
+# Series 2: Where security controls actually go
+
+## 06 · Carousel: "I mapped every wall a hacker hits"
+Upload `media/control-placement-carousel.pdf` as a **document** post and give it the title "Where every security control goes".
+
+Every hacker runs into the same walls. Most people just don't know where the walls are.
+
+So I mapped them. 10 slides: where each security control sits on a network, why it sits there, and how to build it yourself in Cisco Packet Tracer.
+
+The slide that stuck with me: Target, 2013. Attackers used one HVAC vendor's login, and about 40 million cards were stolen. The security tools raised alerts. Nobody acted in time.
+
+A control only works if it's in the right spot and someone's actually watching it.
+
+Small business, one budget. Which layer do you buy first? 👇
+
+#cybersecurity #networksecurity #SecurityPlus #CCNA #PacketTracer #SOC
+
+## 07 · Video: The Gauntlet
+Upload `media/gauntlet-short.mp4`.
+
+6 attacks hit the same network. Watch where each one dies.
+
+Port scan → edge router
+SQL injection → web app firewall
+Exploit → IPS
+Random laptop plugged in → quarantined at the switch port
+Malware calling home → blocked by the proxy
+
+The 6th one, a stolen VPN login, gets in. That's the point. Something always gets in. The IDS saw it, the SIEM isolated the machine, and no data left.
+
+You don't need one perfect wall. You need layers.
+
+Which of these 6 do you think happens most in real life?
+
+#cybersecurity #blueteam #SOCanalyst #defenseindepth #networksecurity
