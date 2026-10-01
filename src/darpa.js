@@ -268,5 +268,110 @@
     phase() { return this.cells.some(c => c.state === 1) ? 'CRASH → GENERATING PATCH' : this.patched ? 'PATCHED — STILL FUZZING' : 'EXPLORING CODE'; }
   }
 
-  G.DARPA = { modules: [LO, Battlespace, MachineSpeed], colors: { PH, PH2, AMB, RED, CY, BG } };
+
+  // ======================================================================
+  // 04 · MOSAIC — "assume the backbone is compromised" (MINC-style orchestration)
+  // ======================================================================
+  const LT = { fiber: { col: PH, w: 4, dash: [], jam: false, ms: 2 }, wifi: { col: CY, w: 2, dash: [3, 5], jam: true, ms: 3 },
+    lte: { col: '#b18cff', w: 2, dash: [10, 6], jam: true, ms: 30 }, radio: { col: AMB, w: 2.5, dash: [14, 6], jam: true, ms: 18 }, satcom: { col: '#ff8fd0', w: 2, dash: [2, 7], jam: false, ms: 280 } };
+  class Mosaic {
+    static meta = { id: 'mosaic', no: '04', title: 'MOSAIC', year: '2020s · MINC',
+      concept: 'Assume the backbone is compromised. A static network dies with its main link. A mosaic network treats every link it can find (fiber, radio, LTE, satellite) as a tile and re-assembles a path on the fly.',
+      howto: 'Click a fiber line to cut it. Click open space to drop a jammer (kills radio, LTE and Wi-Fi nearby).' };
+    constructor(c) { this.c = c; this.ctx = c.getContext('2d'); }
+    reset(seed) {
+      this.R = rng(seed); this.t = 0;
+      const P = { SENSOR: [.08, .56], 'EDGE-1': [.25, .40], 'EDGE-2': [.25, .74], 'CORE-A': [.45, .33], 'CORE-B': [.69, .33], RELAY: [.46, .55], 'RELAY-2': [.68, .57], TOWER: [.46, .80], SAT: [.52, .09], HQ: [.91, .52] };
+      this.nodes = Object.entries(P).map(([n, p]) => ({ n, x: p[0], y: p[1] }));
+      this.ix = Object.fromEntries(this.nodes.map((n, i) => [n.n, i]));
+      const L = [['SENSOR', 'EDGE-1', 'wifi'], ['SENSOR', 'EDGE-2', 'lte'], ['EDGE-1', 'CORE-A', 'fiber'], ['CORE-A', 'CORE-B', 'fiber'], ['CORE-B', 'HQ', 'fiber'],
+        ['EDGE-1', 'RELAY', 'radio'], ['RELAY', 'RELAY-2', 'radio'], ['RELAY-2', 'HQ', 'radio'], ['RELAY', 'CORE-B', 'radio'], ['EDGE-2', 'TOWER', 'lte'], ['TOWER', 'RELAY-2', 'lte'],
+        ['EDGE-2', 'SAT', 'satcom'], ['SAT', 'HQ', 'satcom']];
+      this.links = L.map(([a, b, t]) => ({ a: this.ix[a], b: this.ix[b], t, cut: false, jammed: false }));
+      this.staticPath = ['SENSOR', 'EDGE-1', 'CORE-A', 'CORE-B', 'HQ'].map(n => this.ix[n]);
+      this.jammers = []; this.pk = []; this.stat = { mosaicOk: 0, staticOk: 0, staticLost: 0, changes: 0 }; this.path = null; this.log = [];
+      this.auto = true;
+    }
+    up(l) { return !l.cut && !l.jammed; }
+    linkBetween(a, b) { return this.links.find(l => (l.a === a && l.b === b) || (l.a === b && l.b === a)); }
+    route() { // Dijkstra on latency over whatever is up
+      const n = this.nodes.length, d = Array(n).fill(1e9), p = Array(n).fill(-1), done = Array(n).fill(false), s = this.ix.SENSOR, t = this.ix.HQ; d[s] = 0;
+      for (let k = 0; k < n; k++) { let u = -1; for (let i = 0; i < n; i++) if (!done[i] && (u < 0 || d[i] < d[u])) u = i; if (u < 0 || d[u] >= 1e9) break; done[u] = true;
+        for (const l of this.links) { if (!this.up(l)) continue; const v = l.a === u ? l.b : l.b === u ? l.a : -1; if (v < 0) continue; const w = LT[l.t].ms; if (d[u] + w < d[v]) { d[v] = d[u] + w; p[v] = u; } } }
+      if (d[t] >= 1e9) return null; const out = []; for (let v = t; v >= 0; v = p[v]) out.unshift(v); return out;
+    }
+    applyJam() { const W = this.c.width; for (const l of this.links) { const A = this.nodes[l.a], B = this.nodes[l.b], mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+        l.jammed = LT[l.t].jam && this.jammers.some(j => Math.hypot(j.x - mx, j.y - my) < j.r); } }
+    say(txt) { this.log.push({ t: this.t, txt }); if (this.log.length > 4) this.log.shift(); }
+    click(x, y) { const W = this.c.width, H = this.c.height, px = x / W, py = y / H;
+      // near a fiber link midpoint -> cut / repair
+      let best = null, bd = 1e9; for (const l of this.links) { if (l.t !== 'fiber') continue; const A = this.nodes[l.a], B = this.nodes[l.b]; const d = Math.hypot((A.x + B.x) / 2 - px, (A.y + B.y) / 2 - py); if (d < bd) { bd = d; best = l; } }
+      if (best && bd < .06) { best.cut = !best.cut; this.say((best.cut ? 'FIBER CUT ' : 'FIBER REPAIRED ') + this.nodes[best.a].n + '↔' + this.nodes[best.b].n); }
+      else { const j = this.jammers.findIndex(j => Math.hypot(j.x - px, j.y - py) < .06); if (j >= 0) { this.jammers.splice(j, 1); this.say('JAMMER REMOVED'); } else { this.jammers.push({ x: px, y: py, r: .16, t0: this.t }); this.say('JAMMER ACTIVE'); } }
+      this.applyJam(); }
+    step() {
+      this.t++;
+      if (this.auto) {
+        if (this.t === 140) { this.linkBetween(this.ix['CORE-A'], this.ix['CORE-B']).cut = true; this.say('FIBER CUT CORE-A↔CORE-B'); }
+        if (this.t === 300) { this.jammers.push({ x: .47, y: .50, r: .17, t0: this.t }); this.applyJam(); this.say('JAMMER ACTIVE  (radio + wifi down)'); }
+        if (this.t === 470) { this.jammers = []; this.applyJam(); this.linkBetween(this.ix['CORE-A'], this.ix['CORE-B']).cut = false; this.say('JAMMER GONE, FIBER REPAIRED'); }
+      }
+      const r = this.route(), sig = r ? r.join(',') : 'none';
+      if (sig !== (this.path ? this.path.join(',') : 'none')) { if (this.path) this.stat.changes++; this.path = r; if (r) this.say('MOSAIC ROUTE: ' + r.map(i => this.nodes[i].n).join(' > ')); else this.say('NO PATH'); }
+      if (this.t % 7 === 0) {
+        if (this.path) this.pk.push({ kind: 'm', route: this.path.slice(), i: 0, f: 0 });
+        this.pk.push({ kind: 's', route: this.staticPath.slice(), i: 0, f: 0 });
+      }
+      for (const p of this.pk) { if (p.dead || p.done) continue;
+        const l = this.linkBetween(p.route[p.i], p.route[p.i + 1]);
+        if (!l || !this.up(l)) { if (p.kind === 's') { p.dead = true; p.dt = this.t; this.stat.staticLost++; continue; } // static path has no plan B
+          const r = this.route(); if (!r) { p.dead = true; p.dt = this.t; continue; } p.route = r; p.i = 0; p.f = 0; continue; }
+        p.f += 3.2 / Math.max(6, LT[l.t].ms * .9 + 6); if (p.f >= 1) { p.f = 0; p.i++; if (p.i >= p.route.length - 1) { p.done = true; p.kind === 'm' ? this.stat.mosaicOk++ : this.stat.staticOk++; } }
+      }
+      this.pk = this.pk.filter(p => !(p.done) && !(p.dead && this.t - p.dt > 30));
+    }
+    draw() {
+      const ctx = this.ctx, W = this.c.width, H = this.c.height, k = W / 1000, X = n => n.x * W, Y = n => n.y * H;
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+      // hex mosaic background; tiles under the active path light up
+      const hs = 34 * k, hw = hs * Math.sqrt(3), onPath = [];
+      if (this.path) for (let i = 0; i < this.path.length - 1; i++) { const A = this.nodes[this.path[i]], B = this.nodes[this.path[i + 1]]; for (let u = 0; u <= 1; u += .04) onPath.push([X(A) + (X(B) - X(A)) * u, Y(A) + (Y(B) - Y(A)) * u, this.linkBetween(this.path[i], this.path[i + 1]).t]); }
+      for (let row = 0, y = 0; y < H + hs; row++, y += hs * 1.5) for (let x = (row % 2) * hw / 2; x < W + hw; x += hw) {
+        let lit = null; for (const p of onPath) if ((p[0] - x) ** 2 + (p[1] - y) ** 2 < (hs * .95) ** 2) { lit = p[2]; break; }
+        ctx.beginPath(); for (let a = 0; a < 6; a++) { const ang = Math.PI / 6 + a * Math.PI / 3; const px = x + Math.cos(ang) * hs * .96, py = y + Math.sin(ang) * hs * .96; a ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath();
+        if (lit) { ctx.fillStyle = LT[lit].col + '2a'; ctx.fill(); }
+        ctx.strokeStyle = lit ? LT[lit].col + '66' : 'rgba(57,255,136,.06)'; ctx.lineWidth = 1; ctx.stroke(); }
+      // jammers
+      for (const j of this.jammers) { const age = this.t - j.t0; for (let r = 0; r < 3; r++) { const rr = ((age * 2 + r * 40) % 120) / 120; ctx.strokeStyle = `rgba(255,77,77,${.5 * (1 - rr)})`; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.arc(j.x * W, j.y * H, j.r * W * rr, 0, 6.283); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(255,77,77,.08)'; ctx.beginPath(); ctx.arc(j.x * W, j.y * H, j.r * W, 0, 6.283); ctx.fill(); tag(ctx, j.x * W, j.y * H, 'JAMMER', RED, 14 * k, 'center'); }
+      // links
+      for (const l of this.links) { const A = this.nodes[l.a], B = this.nodes[l.b], st = LT[l.t], dead = !this.up(l);
+        ctx.setLineDash(st.dash.map(v => v * k)); ctx.lineWidth = st.w * k; ctx.strokeStyle = dead ? 'rgba(255,77,77,.35)' : st.col + 'aa';
+        ctx.beginPath(); ctx.moveTo(X(A), Y(A)); ctx.lineTo(X(B), Y(B)); ctx.stroke(); ctx.setLineDash([]);
+        if (l.cut) { const mx = (X(A) + X(B)) / 2, my = (Y(A) + Y(B)) / 2; ctx.strokeStyle = RED; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.moveTo(mx - 12 * k, my - 12 * k); ctx.lineTo(mx + 12 * k, my + 12 * k); ctx.moveTo(mx + 12 * k, my - 12 * k); ctx.lineTo(mx - 12 * k, my + 12 * k); ctx.stroke(); } }
+      // static path ghost outline
+      ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 12 * k; ctx.beginPath(); this.staticPath.forEach((v, i) => { const n = this.nodes[v]; i ? ctx.lineTo(X(n), Y(n)) : ctx.moveTo(X(n), Y(n)); }); ctx.stroke();
+      // packets
+      for (const p of this.pk) { const A = this.nodes[p.route[p.i]], B = this.nodes[p.route[Math.min(p.i + 1, p.route.length - 1)]]; const x = X(A) + (X(B) - X(A)) * p.f, y = Y(A) + (Y(B) - Y(A)) * p.f;
+        if (p.dead) { ctx.strokeStyle = RED; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.moveTo(x - 7 * k, y - 7 * k); ctx.lineTo(x + 7 * k, y + 7 * k); ctx.moveTo(x + 7 * k, y - 7 * k); ctx.lineTo(x - 7 * k, y + 7 * k); ctx.stroke(); continue; }
+        if (p.kind === 's') { ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillRect(x - 5 * k, y - 5 * k + 14 * k, 10 * k, 10 * k); }
+        else { ctx.fillStyle = PH; ctx.shadowColor = PH; ctx.shadowBlur = 12 * k; ctx.beginPath(); ctx.arc(x, y, 7 * k, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0; } }
+      // nodes
+      for (const n of this.nodes) { const x = X(n), y = Y(n), end = n.n === 'SENSOR' || n.n === 'HQ', col = end ? AMB : PH;
+        ctx.fillStyle = BG; ctx.strokeStyle = col; ctx.lineWidth = 2.5 * k; ctx.beginPath(); ctx.arc(x, y, (end ? 20 : 15) * k, 0, 6.283); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = col; ctx.font = mono(17 * k, 800); ctx.textAlign = 'center'; ctx.fillText(n.n, x, y - 26 * k); }
+      // legend + scoreboard
+      ctx.textAlign = 'left'; let lx = 30 * k; const ly = H - 30 * k; ctx.font = mono(15 * k, 700);
+      for (const [name, st] of Object.entries(LT)) { ctx.strokeStyle = st.col; ctx.lineWidth = st.w * k; ctx.setLineDash(st.dash.map(v => v * k)); ctx.beginPath(); ctx.moveTo(lx, ly - 5 * k); ctx.lineTo(lx + 36 * k, ly - 5 * k); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = st.col; ctx.fillText(name, lx + 42 * k, ly); lx += 150 * k; }
+      const sb = [['● MOSAIC delivered', this.stat.mosaicOk, PH], ['■ STATIC delivered', this.stat.staticOk, '#ddd'], ['✕ STATIC lost', this.stat.staticLost, RED]];
+      sb.forEach(([t, v, c], i) => { ctx.fillStyle = c; ctx.font = mono(17 * k, 800); ctx.fillText(t.padEnd(20) + String(v).padStart(4), 30 * k, 92 * k + i * 26 * k); });
+      this.log.forEach((e, i) => { ctx.fillStyle = e.txt.startsWith('MOSAIC') ? PH : e.txt.includes('REPAIRED') || e.txt.includes('GONE') ? CY : RED; ctx.font = mono(14 * k, 600); ctx.textAlign = 'right'; ctx.fillText(e.txt, W - 24 * k, H * .9 - (this.log.length - 1 - i) * 22 * k); });
+      ctx.textAlign = 'left';
+      crt(ctx, W, H, this.t);
+    }
+    readouts() { return [['mosaic delivered', this.stat.mosaicOk], ['static delivered', this.stat.staticOk], ['static lost', this.stat.staticLost], ['path changes', this.stat.changes]]; }
+    phase() { const sOk = this.staticPath.every((v, i) => i === 0 || this.up(this.linkBetween(this.staticPath[i - 1], v))); return !this.path ? 'NO PATH' : sOk ? 'BACKBONE UP' : 'BACKBONE DOWN — MOSAIC REROUTING'; }
+  }
+
+  G.DARPA = { modules: [LO, Battlespace, MachineSpeed, Mosaic], colors: { PH, PH2, AMB, RED, CY, BG } };
 })(typeof window !== 'undefined' ? window : globalThis);
