@@ -41,6 +41,11 @@ const SEG=[
  {m:2, yr:'2016 → 2025', ttl:'MACHINE SPEED', frames:330, spf:1, why:'AIxCC 2025: AI systems found 86% of planted bugs and patched 68% of them, about 45 min per patch.',
   beats:[[0,'A fuzzer fires mutated inputs at a program, millions of times.'],[.28,'Inputs that reach new code are kept. Coverage spreads.'],[.5,'Red = crash found. The system writes and tests a patch.'],[.75,'2016: machines hack + patch, no humans. 2025: AI does it on real code.']]}
 ];
+const ONLY=new URLSearchParams(location.search).get('seg');
+if(ONLY==='mosaic'){ SEG.length=0; SEG.push({m:3, yr:'ASSUME', ttl:'THE BACKBONE IS GONE', frames:560, spf:1, why:'Single points of failure are a security finding. Redundant paths + automatic failover keep data moving through a cut cable, a DDoS, or a jammed link.',
+  beats:[[0,'White squares: a static network. One fixed path over the fiber backbone.'],[.12,'Green dots: a mosaic network. Same start, same goal, any link it can find.'],[.25,'The backbone fiber gets cut. Static traffic dies right there.'],[.42,'Mosaic re-routes over radio in milliseconds.'],[.55,'Now a jammer knocks out the radios. Mosaic switches to LTE.'],[.84,'Fiber repaired. Mosaic goes back to the fast path.']]});
+  document.querySelector('#intro h1').innerHTML='Assume the backbone<br><em>is compromised.</em>'; document.querySelector('#intro p').innerHTML='DARPA’s MINC idea, simulated:<br>static network vs mosaic network.';
+  document.querySelector('#outro h1').innerHTML='No single path.<br><em>No single point of failure.</em>'; document.querySelector('#outro p').innerHTML='Every link is a tile. Lose one, use another.'; document.querySelector('#outro .q').textContent='Where’s the single point of failure in your network?'; }
 const INTRO=60, OUTRO=110; let t=INTRO; SEG.forEach(s=>{s.start=t; t+=s.frames;}); const TOTAL=t+OUTRO; window.TOTAL=TOTAL;
 const cv=document.getElementById('cv'); let cur=-1, mod=null;
 window.frame=function(f){
@@ -51,7 +56,7 @@ window.frame=function(f){
   const s=SEG[si];
   if(si!==cur){ cur=si; mod=new DARPA.modules[s.m](cv); mod.reset(si===0?7:si===1?11:5); if(s.m===0) mod.autoKill=true;
     document.getElementById('yr').textContent=s.yr; document.getElementById('ttl').textContent=s.ttl; document.getElementById('why').textContent=s.why;
-    document.getElementById('idx').textContent=(si+1)+' / 3'; }
+    document.getElementById('idx').textContent=ONLY?'MINC':(si+1)+' / 3'; }
   const lf=f-s.start;
   if(s.m===2 && (lf===120||lf===180)) mod.click(500+lf, 520);
   if(s.m===1 && lf===220){ const h=mod.hosts.find(h=>h.risk===2)||mod.hosts[0]; mod.sel=h; }
