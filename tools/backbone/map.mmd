@@ -1,0 +1,22 @@
+flowchart LR
+  SENSOR["SENSOR<br/><small>edge device</small>"]
+  EDGE_1["EDGE-1<br/><small>edge router</small>"]
+  EDGE_2["EDGE-2<br/><small>edge router</small>"]
+  CORE_A["CORE-A<br/><small>core router</small>"]
+  CORE_B["CORE-B<br/><small>core router</small>"]
+  RELAY["RELAY<br/><small>radio relay</small>"]
+  SAT["SAT<br/><small>satellite ground station</small>"]
+  HQ["HQ<br/><small>destination</small>"]
+  SENSOR ---|wifi 3ms| EDGE_1
+  SENSOR -.-|lte 35ms| EDGE_2
+  EDGE_1 ===|fiber 2ms| CORE_A
+  CORE_A ===|fiber 2ms| CORE_B
+  CORE_B ===|fiber 2ms| HQ
+  EDGE_1 -.-|radio 18ms| RELAY
+  RELAY -.-|radio 18ms| CORE_B
+  EDGE_2 -.-|satcom 280ms| SAT
+  SAT -.-|satcom 280ms| HQ
+  EDGE_2 -.-|lte 30ms| CORE_A
+  linkStyle 0,2,3,4,5,6,7,8,9 stroke:#39ff88,stroke-width:4px
+  style SENSOR fill:#ffb63d,color:#000
+  style HQ fill:#ffb63d,color:#000

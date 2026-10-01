@@ -1,0 +1,33 @@
+{
+  "name": "edge-mosaic-lab",
+  "description": "Small mixed-link network. The fiber backbone is the fast path; everything else is a backup tile.",
+  "source": "SENSOR",
+  "destination": "HQ",
+  "nodes": [
+    {"id": "SENSOR",  "role": "edge device"},
+    {"id": "EDGE-1",  "role": "edge router"},
+    {"id": "EDGE-2",  "role": "edge router"},
+    {"id": "CORE-A",  "role": "core router"},
+    {"id": "CORE-B",  "role": "core router"},
+    {"id": "RELAY",   "role": "radio relay"},
+    {"id": "SAT",     "role": "satellite ground station"},
+    {"id": "HQ",      "role": "destination"}
+  ],
+  "links": [
+    {"a": "SENSOR", "b": "EDGE-1", "type": "wifi",      "latency_ms": 3,   "loss": 0.01},
+    {"a": "SENSOR", "b": "EDGE-2", "type": "lte",       "latency_ms": 35,  "loss": 0.02},
+    {"a": "EDGE-1", "b": "CORE-A", "type": "fiber",     "latency_ms": 2,   "loss": 0.0},
+    {"a": "CORE-A", "b": "CORE-B", "type": "fiber",     "latency_ms": 2,   "loss": 0.0},
+    {"a": "CORE-B", "b": "HQ",     "type": "fiber",     "latency_ms": 2,   "loss": 0.0},
+    {"a": "EDGE-1", "b": "RELAY",  "type": "radio",     "latency_ms": 18,  "loss": 0.05},
+    {"a": "RELAY",  "b": "CORE-B", "type": "radio",     "latency_ms": 18,  "loss": 0.05},
+    {"a": "EDGE-2", "b": "SAT",    "type": "satcom",    "latency_ms": 280, "loss": 0.02},
+    {"a": "SAT",    "b": "HQ",     "type": "satcom",    "latency_ms": 280, "loss": 0.02},
+    {"a": "EDGE-2", "b": "CORE-A", "type": "lte",       "latency_ms": 30,  "loss": 0.02}
+  ],
+  "events": [
+    {"at_packet": 5,  "fail": ["CORE-A", "CORE-B"], "note": "backbone fiber cut"},
+    {"at_packet": 10, "fail": ["EDGE-1", "RELAY"],   "note": "radio relay jammed"},
+    {"at_packet": 15, "restore": ["CORE-A", "CORE-B"], "note": "fiber repaired"}
+  ]
+}
