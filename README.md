@@ -28,7 +28,12 @@ Generative art where the simulation *is* the lesson. Each piece runs a real algo
 |---|---|---|
 | <img src="media/darpa-lo.gif" width="200"> | **01 · LO (1969, ARPANET)**<br>Packet switching on an isometric mesh | Type a message and knock nodes offline. Packets reroute, arrive out of order, and get rebuilt by sequence number. |
 | <img src="media/darpa-battlespace.gif" width="200"> | **02 · Battlespace (2012, Plan X)**<br>Radar-sweep network discovery | Watch three sweeps find live hosts, then open ports, then risky services. Click any host to see what the scan found. |
+| <img src="media/darpa-mosaic.gif" width="200"> | **04 · Mosaic (2020s, MINC)**<br>Static vs mosaic network under attack | Cut the fiber backbone or drop a jammer. The static path dies; the mosaic path rebuilds itself from radio, LTE or satellite tiles. ([video](media/mosaic-short.mp4)) |
 | <img src="media/darpa-machine-speed.gif" width="200"> | **03 · Machine Speed (2016 CGC → 2025 AIxCC)**<br>Coverage-guided fuzzing + auto-patch | Plant a bug anywhere in the program and watch the fuzzer reach it, crash it, and patch it. |
+
+### Lab tool: assume the backbone is compromised
+
+[`tools/backbone/`](tools/backbone/): a pure-Python failover simulator. It sends a numbered message across a mixed fiber/Wi-Fi/LTE/radio/satellite network, cuts and jams links mid-stream, re-routes with Dijkstra, and proves the message arrived intact (sequence numbers + SHA-256). It also exports a Mermaid map of the network for beginners.
 
 ## What's in here
 
@@ -40,6 +45,7 @@ src/topology.js     reference network used by the control-placement series
 src/darpa.js        the three DARPA Lineage modules
 darpa.html          interactive DARPA Lineage page
 labs/               Packet Tracer lab guides
+tools/backbone/     failover simulator + topology + beginner map
 render/             scripts that export LinkedIn cards (1080×1350) and vertical videos (1080×1920)
 media/              exported cards, vertical videos, preview GIFs
 posts/              LinkedIn captions and YouTube Shorts plan

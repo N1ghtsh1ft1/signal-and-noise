@@ -13,7 +13,7 @@ header{max-width:1200px;margin:0 auto;padding:44px 20px 16px}
 h1{font-size:clamp(30px,5.5vw,58px);line-height:1.02;color:var(--ph);text-shadow:0 0 18px rgba(57,255,136,.45);margin:16px 0 12px;letter-spacing:-1px}
 h1 span{color:var(--amb);text-shadow:0 0 18px rgba(255,182,61,.4)}
 .lede{max-width:780px;font-size:16px;color:#9fd9b5}
-.timeline{max-width:1200px;margin:22px auto 6px;padding:0 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.timeline{max-width:1200px;margin:22px auto 6px;padding:0 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 .ev{border:1px solid var(--line);padding:12px 14px;background:rgba(57,255,136,.03)}
 .ev b{display:block;color:var(--amb);font-size:22px}
 .ev span{font-size:13px;color:#9fd9b5}
@@ -43,12 +43,13 @@ footer{max-width:1200px;margin:0 auto;padding:0 20px 50px;font-size:13px;color:#
 <header>
  <span class="cls">SIGNAL &amp; NOISE · SERIES 3 · DARPA LINEAGE</span>
  <h1>The agency that built the network<br><span>also taught us how to defend it.</span></h1>
- <p class="lede">Three interactive simulations, one per idea DARPA pushed into the world: how data moves, how you map a network, and how machines now find and fix bugs faster than people. Click inside each one. Break things. Watch what happens.</p>
+ <p class="lede">Four interactive simulations, one per idea DARPA pushed into the world: how data moves, how you map a network, how machines find and fix bugs, and how networks survive when the backbone is gone. Click inside each one. Break things. Watch what happens.</p>
 </header>
 <section class="timeline" aria-label="Timeline">
  <div class="ev"><b>1969</b><span>ARPANET's first message, UCLA → SRI. The system crashed after two letters: "LO".</span></div>
  <div class="ev"><b>2012</b><span>Plan X: DARPA program to map and visualize cyberspace like a battlefield.</span></div>
  <div class="ev"><b>2016</b><span>Cyber Grand Challenge: machines hack and patch with no humans. Mayhem (CMU / ForAllSecure) wins.</span></div>
+ <div class="ev"><b>2020s</b><span>MINC: treat every available link as a tile and assemble a path on the fly when the main network is jammed or cut.</span></div>
  <div class="ev"><b>2025</b><span>AI Cyber Challenge: AI systems scan 54M lines of code. Team Atlanta wins; tools released open source.</span></div>
 </section>
 <main id="mods"></main>
@@ -59,6 +60,7 @@ Simulations are teaching models, not real tools. Host names and IPs are made up 
 const WHY={
  'lo':['Why defenders care','TCP sequence numbers are how the receiver rebuilds the message. They also matter for security: attackers try to predict or spoof them, and IDS tools reassemble streams the same way to inspect them.'],
  'battlespace':['Why defenders care','You can’t protect what you don’t know exists. Asset inventory is CIS Control #1. Attackers run this same scan. Telnet, SMB and RDP showing up to the wrong network is how a lot of breaches start.'],
+ 'mosaic':['Why defenders care','Single points of failure are a risk finding, not just an uptime problem. Redundant paths, diverse carriers and automatic failover are how real networks (and incident plans) survive a cut cable, a DDoS or a jammed link.'],
  'machine-speed':['Why defenders care','At AIxCC finals, teams’ systems found 86% of planted bugs and patched 68% of those, averaging about 45 minutes per patch. Humans still decide what matters, but the grind work is getting automated.']};
 const mods=document.getElementById('mods');
 DARPA.modules.forEach(M=>{
