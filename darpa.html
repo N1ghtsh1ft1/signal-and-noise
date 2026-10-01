@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DARPA Lineage — interactive networking & cyber defense</title>
+<meta name="description" content="Three interactive simulations tracing DARPA's influence on networking and cyber defense: packet switching (ARPANET 1969), network mapping (Plan X 2012), and machine-speed bug finding (Cyber Grand Challenge 2016, AIxCC 2025).">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ph:#39ff88;--dim:#1d8f50;--amb:#ffb63d;--red:#ff4d4d;--cy:#5ee7ff;--bg:#020805;--line:rgba(57,255,136,.22)}
+body{background:var(--bg);color:#c9f7da;font-family:ui-monospace,"SFMono-Regular",Menlo,"DejaVu Sans Mono",monospace;line-height:1.5;
+ background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
+a{color:var(--cy)}
+header{max-width:1200px;margin:0 auto;padding:44px 20px 16px}
+.cls{display:inline-block;border:1px solid var(--amb);color:var(--amb);padding:4px 10px;font-size:12px;letter-spacing:3px}
+h1{font-size:clamp(30px,5.5vw,58px);line-height:1.02;color:var(--ph);text-shadow:0 0 18px rgba(57,255,136,.45);margin:16px 0 12px;letter-spacing:-1px}
+h1 span{color:var(--amb);text-shadow:0 0 18px rgba(255,182,61,.4)}
+.lede{max-width:780px;font-size:16px;color:#9fd9b5}
+.timeline{max-width:1200px;margin:22px auto 6px;padding:0 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ev{border:1px solid var(--line);padding:12px 14px;background:rgba(57,255,136,.03)}
+.ev b{display:block;color:var(--amb);font-size:22px}
+.ev span{font-size:13px;color:#9fd9b5}
+main{max-width:1200px;margin:0 auto;padding:18px 20px 40px;display:grid;gap:26px}
+.mod{display:grid;grid-template-columns:minmax(0,1fr) 360px;border:1px solid var(--line);background:rgba(2,12,7,.9)}
+.stage{position:relative;border-right:1px solid var(--line)}
+.stage canvas{display:block;width:100%;height:auto;aspect-ratio:1;cursor:crosshair}
+.phase{position:absolute;left:12px;top:12px;background:var(--ph);color:var(--bg);font-weight:800;font-size:12px;letter-spacing:2px;padding:4px 9px}
+.side{padding:20px;display:flex;flex-direction:column;gap:14px;font-size:14px}
+.side .no{color:var(--amb);letter-spacing:3px;font-size:12px}
+.side h2{color:var(--ph);font-size:30px;letter-spacing:1px;text-shadow:0 0 12px rgba(57,255,136,.4)}
+.side .yr{color:var(--cy);font-size:13px}
+.side p{color:#c9f7da}
+.box{border:1px solid var(--line);padding:12px}
+.box h3{font-size:11px;letter-spacing:3px;color:var(--amb);margin-bottom:6px}
+.ro div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding:3px 0;font-size:13px}
+.ro div span:last-child{color:var(--cy)}
+.hint{color:var(--amb);font-size:13px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button,input{font:inherit;font-size:13px;background:transparent;color:var(--ph);border:1px solid var(--ph);padding:6px 10px;cursor:pointer;letter-spacing:1px}
+button:hover{background:var(--ph);color:var(--bg)}
+input{width:120px;cursor:text;text-transform:uppercase}
+button:focus-visible,input:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+footer{max-width:1200px;margin:0 auto;padding:0 20px 50px;font-size:13px;color:#7fb894}
+@media (max-width:880px){.mod{grid-template-columns:1fr}.stage{border-right:0;border-bottom:1px solid var(--line)}.timeline{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<header>
+ <span class="cls">SIGNAL &amp; NOISE · SERIES 3 · DARPA LINEAGE</span>
+ <h1>The agency that built the network<br><span>also taught us how to defend it.</span></h1>
+ <p class="lede">Three interactive simulations, one per idea DARPA pushed into the world: how data moves, how you map a network, and how machines now find and fix bugs faster than people. Click inside each one. Break things. Watch what happens.</p>
+</header>
+<section class="timeline" aria-label="Timeline">
+ <div class="ev"><b>1969</b><span>ARPANET's first message, UCLA → SRI. The system crashed after two letters: "LO".</span></div>
+ <div class="ev"><b>2012</b><span>Plan X: DARPA program to map and visualize cyberspace like a battlefield.</span></div>
+ <div class="ev"><b>2016</b><span>Cyber Grand Challenge: machines hack and patch with no humans. Mayhem (CMU / ForAllSecure) wins.</span></div>
+ <div class="ev"><b>2025</b><span>AI Cyber Challenge: AI systems scan 54M lines of code. Team Atlanta wins; tools released open source.</span></div>
+</section>
+<main id="mods"></main>
+<footer>Built by <b>Isaiah C. Anderson</b> · plain JavaScript + canvas, no libraries · <a href="./">Series 1 &amp; 2 gallery</a> · <a href="https://github.com/N1ghtsh1ft1/signal-and-noise">source</a><br>
+Simulations are teaching models, not real tools. Host names and IPs are made up (private / documentation ranges). This project is not affiliated with DARPA.</footer>
+<script src="src/darpa.js"></script>
+<script>
+const WHY={
+ 'lo':['Why defenders care','TCP sequence numbers are how the receiver rebuilds the message. They also matter for security: attackers try to predict or spoof them, and IDS tools reassemble streams the same way to inspect them.'],
+ 'battlespace':['Why defenders care','You can’t protect what you don’t know exists. Asset inventory is CIS Control #1. Attackers run this same scan. Telnet, SMB and RDP showing up to the wrong network is how a lot of breaches start.'],
+ 'machine-speed':['Why defenders care','At AIxCC finals, teams’ systems found 86% of planted bugs and patched 68% of those, averaging about 45 minutes per patch. Humans still decide what matters, but the grind work is getting automated.']};
+const mods=document.getElementById('mods');
+DARPA.modules.forEach(M=>{
+  const m=M.meta, el=document.createElement('section'); el.className='mod'; el.id=m.id;
+  el.innerHTML=`<div class="stage"><canvas width="900" height="900" aria-label="${m.title} simulation"></canvas><div class="phase"></div></div>
+  <div class="side"><div class="no">MODULE ${m.no}</div><h2>${m.title}</h2><div class="yr">${m.year}</div><p>${m.concept}</p>
+  <div class="box"><h3>${WHY[m.id][0].toUpperCase()}</h3><p>${WHY[m.id][1]}</p></div>
+  <div class="hint">▸ ${m.howto}</div>
+  <div class="box ro"></div>
+  <div class="btns">${m.id==='lo'?'<input aria-label="Message to send" maxlength="8" value="LOGIN"><button data-a="send">SEND</button>':''}<button data-a="replay">REPLAY</button><button data-a="seed">NEW LAYOUT</button></div></div>`;
+  mods.appendChild(el);
+  const cv=el.querySelector('canvas'), mod=new M(cv); let seed=7, vis=false;
+  const reset=()=>mod.reset(seed, el.querySelector('input')?.value);
+  reset();
+  cv.addEventListener('click',e=>{const r=cv.getBoundingClientRect(); mod.click((e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height);});
+  el.addEventListener('click',e=>{const a=e.target.dataset&&e.target.dataset.a; if(!a)return; if(a==='seed')seed=1+Math.floor(Math.random()*9999); reset();});
+  el.querySelector('input')?.addEventListener('keydown',e=>{if(e.key==='Enter')reset();});
+  new IntersectionObserver(es=>es.forEach(x=>vis=x.isIntersecting),{threshold:.1}).observe(el);
+  const ro=el.querySelector('.ro'), ph=el.querySelector('.phase'); let f=0;
+  (function loop(){ if(vis){ mod.step(); mod.draw(); if(f++%8===0){ ro.innerHTML=mod.readouts().map(([a,b])=>`<div><span>${a}</span><span>${b}</span></div>`).join(''); ph.textContent=mod.phase(); } } requestAnimationFrame(loop); })();
+});
+</script>
+</body></html>
