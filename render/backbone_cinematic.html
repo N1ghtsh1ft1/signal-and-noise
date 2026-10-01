@@ -1,0 +1,167 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>*{margin:0;padding:0}body{width:1080px;height:1920px;background:#050b10;overflow:hidden}canvas{display:block}</style></head><body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script>
+/* "Assume the backbone is compromised" — cinematic cut.
+   Tactical topo-map style with a moving camera, comet packets, impact FX and a terminal lower-third.
+   window.frame(f) draws frame f; window.EVENTS collects sound cues for the audio track. */
+const C=document.getElementById('c'), X=C.getContext('2d'), W=1080, H=1920;
+const COL={bg:'#050b10', topo:'rgba(120,170,160,.16)', topo5:'rgba(150,200,185,.30)', sand:'#e8c48a', white:'#f4f7fa', cy:'#38e1ff', red:'#ff4b4b', amb:'#ffb02e', dim:'#7d93a3', sat:'#c79bff'};
+const MONO='"DejaVu Sans Mono", monospace', SANS='"DejaVu Sans Condensed","DejaVu Sans", sans-serif';
+let s=12345; const R=()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>v<a?a:v>b?b:v, ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+// ---------- world (2000 x 2000) ----------
+const P={S:[260,1320], HQ:[1760,700], T1:[620,1490], T2:[1000,1390], T3:[1380,1190], SAT:[1000,140], CUT:[1100,955]};
+const ROUTES={
+ fiber:{pts:[P.S,[650,1185],P.CUT,[1450,820],P.HQ], col:COL.white, name:'FIBER BACKBONE', hops:'SENSOR ▸ CORE-A ▸ CORE-B ▸ HQ', ms:9, sp:.020, arc:0},
+ radio:{pts:[P.S,P.T1,P.T2,P.T3,P.HQ], col:COL.amb, name:'RADIO RELAY', hops:'SENSOR ▸ RELAY-1 ▸ RELAY-2 ▸ RELAY-3 ▸ HQ', ms:41, sp:.0115, arc:-90},
+ sat:{pts:[P.S,P.SAT,P.HQ], col:COL.sat, name:'SATCOM', hops:'SENSOR ▸ SAT-1 ▸ HQ', ms:280, sp:.0072, arc:0}
+};
+// densify each route into a smooth polyline (arcs between relay towers)
+for(const r of Object.values(ROUTES)){ const out=[]; for(let i=0;i<r.pts.length-1;i++){ const a=r.pts[i], b=r.pts[i+1]; for(let k=0;k<30;k++){ const t=k/30; const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2+r.arc; out.push([(1-t)*(1-t)*a[0]+2*(1-t)*t*mx+t*t*b[0],(1-t)*(1-t)*a[1]+2*(1-t)*t*my+t*t*b[1]]); } } out.push(r.pts[r.pts.length-1]);
+  r.poly=out; r.cum=[0]; for(let i=1;i<out.length;i++) r.cum.push(r.cum[i-1]+Math.hypot(out[i][0]-out[i-1][0],out[i][1]-out[i-1][1])); r.len=r.cum[r.cum.length-1]; }
+function at(r,u){ u=clamp(u,0,1); const d=u*r.len; let i=1; while(i<r.cum.length-1&&r.cum[i]<d) i++; const t=(d-r.cum[i-1])/(r.cum[i]-r.cum[i-1]||1); const a=r.poly[i-1], b=r.poly[i]; return [lerp(a[0],b[0],t), lerp(a[1],b[1],t)]; }
+const U_CUT=(()=>{ const r=ROUTES.fiber; let best=0,bd=1e9; for(let i=0;i<r.poly.length;i++){ const d=Math.hypot(r.poly[i][0]-P.CUT[0],r.poly[i][1]-P.CUT[1]); if(d<bd){bd=d;best=r.cum[i]/r.len;} } return best; })();
+
+// ---------- terrain (precomputed topo map) ----------
+const TER=document.createElement('canvas'); TER.width=2000; TER.height=2000;
+(function(){ const g=TER.getContext('2d'); g.fillStyle=COL.bg; g.fillRect(0,0,2000,2000);
+  const N=160, perm=[...Array(256).keys()].sort(()=>R()-.5), grad=(ix,iy)=>{const h=perm[(perm[ix&255]+iy)&255]; const a=h/256*6.283; return [Math.cos(a),Math.sin(a)];};
+  const noise=(x,y)=>{ const x0=Math.floor(x), y0=Math.floor(y), fx=x-x0, fy=y-y0, f=t=>t*t*(3-2*t); const dot=(ix,iy)=>{const gg=grad(ix,iy); return gg[0]*(x-ix)+gg[1]*(y-iy);};
+    return lerp(lerp(dot(x0,y0),dot(x0+1,y0),f(fx)),lerp(dot(x0,y0+1),dot(x0+1,y0+1),f(fx)),f(fy)); };
+  const H=[]; for(let j=0;j<=N;j++){ H.push([]); for(let i=0;i<=N;i++){ const x=i/N*5, y=j/N*5; H[j].push(noise(x,y)+.5*noise(x*2.1,y*2.1)+.25*noise(x*4.3,y*4.3)); } }
+  const cs=2000/N;
+  for(let L=-14;L<=14;L++){ const lev=L*.05; g.strokeStyle=L%5===0?COL.topo5:COL.topo; g.lineWidth=L%5===0?2.2:1.2; g.beginPath();
+    for(let j=0;j<N;j++) for(let i=0;i<N;i++){ const a=H[j][i],b=H[j][i+1],c=H[j+1][i+1],d=H[j+1][i]; const idx=(a>lev)|((b>lev)<<1)|((c>lev)<<2)|((d>lev)<<3); if(idx===0||idx===15) continue;
+      const e=[]; const px=i*cs, py=j*cs, it=(p,q)=>(lev-p)/(q-p);
+      if((a>lev)!==(b>lev)) e.push([px+cs*it(a,b),py]); if((b>lev)!==(c>lev)) e.push([px+cs,py+cs*it(b,c)]); if((d>lev)!==(c>lev)) e.push([px+cs*it(d,c),py+cs]); if((a>lev)!==(d>lev)) e.push([px,py+cs*it(a,d)]);
+      if(e.length>=2){ g.moveTo(e[0][0],e[0][1]); g.lineTo(e[1][0],e[1][1]); } if(e.length===4){ g.moveTo(e[2][0],e[2][1]); g.lineTo(e[3][0],e[3][1]); } }
+    g.stroke(); }
+  g.strokeStyle='rgba(232,196,138,.10)'; g.lineWidth=1; g.font='22px '+MONO; g.fillStyle='rgba(232,196,138,.35)';
+  for(let k=0;k<=2000;k+=250){ g.beginPath(); g.moveTo(k,0); g.lineTo(k,2000); g.moveTo(0,k); g.lineTo(2000,k); g.stroke(); }
+  'ABCDEFGH'.split('').forEach((ch,i)=>g.fillText(ch,i*250+10,30)); for(let i=0;i<8;i++) g.fillText(String(i+1),8,i*250+56);
+})();
+
+// ---------- timeline ----------
+const T={titleEnd:54, cut:200, radioUp:212, jam:352, satUp:376, repair:520, fiberUp:532, card:600, END:700};
+const CAM=[[0,1000,1000,.54],[150,1000,1000,.54],[185,1100,955,1.35],[240,1100,955,1.35],[285,1000,1050,.62],[325,1000,1050,.62],[355,1000,1150,.70],[420,1000,1150,.70],[465,1000,1000,.54],[495,1000,1000,.54],[515,1100,955,1.25],[555,1100,955,1.25],[595,1000,1000,.54],[700,1000,1000,.54]];
+function cam(f){ let i=0; while(i<CAM.length-2&&CAM[i+1][0]<=f) i++; const a=CAM[i], b=CAM[i+1]; const t=ease(clamp((f-a[0])/(b[0]-a[0]),0,1)); return [lerp(a[1],b[1],t),lerp(a[2],b[2],t),lerp(a[3],b[3],t)]; }
+const BEATS=[[0,'A sensor in the field has to reach HQ.'],[70,'White = a STATIC network. One fixed path over fiber.'],[120,'Cyan = a MOSAIC network. It can use any link it finds.'],[190,'The backbone fiber gets cut.'],[230,'Static traffic dies at the cut. Mosaic reroutes over radio.'],[330,'Now the radios get jammed.'],[385,'Mosaic jumps to satellite. Slower, but still delivering.'],[505,'Fiber repaired. Back on the fast path.'],[565,'Static lost everything while the fiber was down. Mosaic never stopped.']];
+
+// ---------- simulation state (deterministic, advanced once per frame) ----------
+let st, lastF=-1;
+function resetSim(){ s=777; st={pk:[], sparks:[], mosaicOk:0, staticOk:0, staticLost:0, route:'fiber', routeAt:0, typed:0, shake:0, flash:0, events:[]}; }
+function routeFor(f){ return f<T.radioUp?'fiber':f<T.satUp?'radio':f<T.fiberUp?'sat':'fiber'; }
+function fiberUp(f){ return f<T.cut||f>=T.repair; }
+function step(f){
+  const r=routeFor(f); if(r!==st.route){ st.route=r; st.routeAt=f; st.typed=0; st.events.push([f,'reroute']); }
+  if(f===T.cut){ st.shake=24; st.flash=1; st.events.push([f,'snap']); for(let k=0;k<70;k++){ const a=R()*6.283, v=2+R()*9; st.sparks.push({x:P.CUT[0],y:P.CUT[1],vx:Math.cos(a)*v,vy:Math.sin(a)*v-3,life:1,c:R()<.5?COL.amb:COL.white}); } }
+  if(f===T.jam) st.events.push([f,'jam_on']); if(f===T.repair){ st.events.push([f,'chime']); for(let k=0;k<40;k++){ const a=R()*6.283, v=1+R()*5; st.sparks.push({x:P.CUT[0],y:P.CUT[1],vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,c:COL.cy}); } }
+  if(f===T.repair) st.events.push([f,'jam_off']);
+  if(f===0) st.events.push([f,'whoosh']); if(f===T.card) st.events.push([f,'whoosh']);
+  if(f>T.titleEnd-10 && f<T.card-30){
+    if(f%9===0) st.pk.push({k:'m', r:st.route, u:0, sp:ROUTES[st.route].sp*(0.85+R()*.3), trail:[]});
+    if(f%9===4) st.pk.push({k:'s', r:'fiber', u:0, sp:ROUTES.fiber.sp*(0.85+R()*.3), trail:[]});
+  }
+  for(const p of st.pk){ if(p.dead||p.done) continue; const prevU=p.u; p.u+=p.sp;
+    if(p.k==='s' && !fiberUp(f) && prevU<U_CUT && p.u>=U_CUT){ p.dead=true; p.u=U_CUT; st.staticLost++; st.events.push([f,'zap']);
+      for(let k=0;k<12;k++){ const a=R()*6.283, v=1+R()*4; st.sparks.push({x:P.CUT[0],y:P.CUT[1],vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.8,c:COL.red}); } continue; }
+    if(p.k==='m' && p.r!==st.route && f-st.routeAt<2){ p.dead=true; continue; } // in-flight packets on a dead route get resent on the new one
+    const pos=at(ROUTES[p.r],p.u); p.trail.unshift(pos); if(p.trail.length>14) p.trail.pop();
+    if(p.u>=1){ p.done=true; if(p.k==='m'){ st.mosaicOk++; st.events.push([f,'blip']); } else st.staticOk++; } }
+  st.pk=st.pk.filter(p=>!(p.done)&&!(p.dead&&p.trail.length===0)); st.pk.forEach(p=>{ if(p.dead) p.trail.pop(); });
+  for(const sp of st.sparks){ sp.x+=sp.vx; sp.y+=sp.vy; sp.vy+=.25; sp.life-=.025; } st.sparks=st.sparks.filter(s=>s.life>0);
+  st.shake*=.86; st.flash*=.85; st.typed+=1.6;
+}
+
+// ---------- drawing ----------
+function rrect(x,y,w,h,r){ X.beginPath(); X.roundRect(x,y,w,h,r); }
+function txt(t,x,y,font,col,align){ X.font=font; X.fillStyle=col; X.textAlign=align||'left'; X.fillText(t,x,y); }
+function drawMap(f){
+  const VX=0, VY=290, VW=1080, VH=1100; const [cx,cy,z]=cam(f);
+  X.save(); X.beginPath(); X.rect(VX,VY,VW,VH); X.clip();
+  const sh=st.shake; X.translate(VX+VW/2+(R()-.5)*sh, VY+VH/2+(R()-.5)*sh); X.scale(z,z); X.translate(-cx,-cy);
+  X.drawImage(TER,0,0);
+  // jammer storm
+  if(f>=T.jam && f<T.repair){ const age=f-T.jam, k=Math.min(1,age/20); const jx=P.T2[0], jy=P.T2[1]-40;
+    for(let i=0;i<5;i++){ const rr=((age*4+i*70)%360); X.strokeStyle=`rgba(255,75,75,${.55*(1-rr/360)*k})`; X.lineWidth=5; X.beginPath(); X.arc(jx,jy,rr+40,0,6.283); X.stroke(); }
+    const g=X.createRadialGradient(jx,jy,0,jx,jy,420); g.addColorStop(0,`rgba(255,60,60,${.22*k})`); g.addColorStop(1,'rgba(255,60,60,0)'); X.fillStyle=g; X.beginPath(); X.arc(jx,jy,420,0,6.283); X.fill();
+    for(let i=0;i<40;i++){ const a=R()*6.283, d=R()*360; X.fillStyle=`rgba(255,120,120,${.5*k*R()})`; X.fillRect(jx+Math.cos(a)*d, jy+Math.sin(a)*d, 3+R()*10, 2); }
+    X.font='bold 34px '+MONO; X.fillStyle=COL.red; X.textAlign='center'; X.fillText('⚠ JAMMING', jx, jy+300); }
+  // links
+  const drawRoute=(r,state)=>{ const R0=ROUTES[r]; X.lineCap='round';
+    if(state==='active'){ X.strokeStyle=R0.col+'33'; X.lineWidth=26; X.beginPath(); R0.poly.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])); X.stroke(); }
+    X.setLineDash(r==='fiber'?[]:r==='radio'?[26,16]:[6,16]); X.strokeStyle=state==='down'?'rgba(255,75,75,.45)':R0.col+(state==='active'?'ee':'55'); X.lineWidth=r==='fiber'?7:5;
+    X.beginPath(); R0.poly.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1])); X.stroke(); X.setLineDash([]); };
+  const cur=routeFor(f);
+  drawRoute('sat', cur==='sat'?'active':'idle');
+  drawRoute('radio', f>=T.jam&&f<T.repair?'down':cur==='radio'?'active':'idle');
+  drawRoute('fiber', !fiberUp(f)?'down':cur==='fiber'?'active':'idle');
+  if(!fiberUp(f)){ const [x,y]=P.CUT; X.strokeStyle=COL.red; X.lineWidth=9; X.beginPath(); X.moveTo(x-30,y-30); X.lineTo(x+30,y+30); X.moveTo(x+30,y-30); X.lineTo(x-30,y+30); X.stroke();
+    X.font='bold 30px '+MONO; X.fillStyle=COL.red; X.textAlign='left'; X.fillText('FIBER CUT', x+44, y-20); }
+  // sites
+  const site=(p,label,col,r,sub)=>{ X.fillStyle='#050b10'; X.strokeStyle=col; X.lineWidth=6; X.beginPath(); X.arc(p[0],p[1],r,0,6.283); X.fill(); X.stroke();
+    X.fillStyle=col; X.beginPath(); X.arc(p[0],p[1],r*.35,0,6.283); X.fill(); X.font='bold 34px '+SANS; X.textAlign='center'; X.fillText(label,p[0],p[1]-r-18); if(sub){ X.font='22px '+MONO; X.fillStyle=COL.dim; X.fillText(sub,p[0],p[1]+r+34); } };
+  const jammed=f>=T.jam&&f<T.repair;
+  [[P.T1,'R1'],[P.T2,'R2'],[P.T3,'R3']].forEach(([p,l])=>{ const col=jammed?COL.red:COL.amb; X.strokeStyle=col; X.lineWidth=5; X.beginPath(); X.moveTo(p[0]-22,p[1]+30); X.lineTo(p[0],p[1]-30); X.lineTo(p[0]+22,p[1]+30); X.moveTo(p[0]-12,p[1]+5); X.lineTo(p[0]+12,p[1]+5); X.stroke();
+    if(!jammed) for(let k=1;k<=2;k++){ X.strokeStyle=`rgba(255,176,46,${.5-k*.15})`; X.beginPath(); X.arc(p[0],p[1]-30,14*k+((f*.6)%14),-2.4,-.7); X.stroke(); }
+    X.font='bold 26px '+MONO; X.fillStyle=col; X.textAlign='center'; X.fillText(l,p[0],p[1]+66); });
+  // satellite
+  { const [x,y]=P.SAT; X.save(); X.translate(x,y); X.rotate(Math.sin(f*.03)*.08); X.fillStyle=COL.sat; X.fillRect(-16,-16,32,32); X.fillStyle='rgba(199,155,255,.5)'; X.fillRect(-80,-9,56,18); X.fillRect(24,-9,56,18); X.restore();
+    X.strokeStyle='rgba(199,155,255,.25)'; X.lineWidth=2; X.setLineDash([4,10]); X.beginPath(); X.ellipse(1000,700,1100,560,0,3.5,5.95); X.stroke(); X.setLineDash([]); X.font='bold 28px '+MONO; X.fillStyle=COL.sat; X.textAlign='center'; X.fillText('SAT-1',x,y+66); }
+  site(P.S,'SENSOR',COL.sand,30,'field unit'); site(P.HQ,'HQ',COL.sand,36,'command');
+  // packets (comets with motion blur)
+  for(const p of st.pk){ if(!p.trail.length) continue; const col=p.k==='s'?COL.white:COL.cy;
+    for(let i=p.trail.length-1;i>0;i--){ const a=p.trail[i], b=p.trail[i-1]; X.strokeStyle=col; X.globalAlpha=(1-i/p.trail.length)*.7; X.lineWidth=(p.k==='s'?9:12)*(1-i/p.trail.length); X.beginPath(); X.moveTo(a[0],a[1]); X.lineTo(b[0],b[1]); X.stroke(); }
+    X.globalAlpha=1; const h=p.trail[0]; X.shadowColor=col; X.shadowBlur=30; X.fillStyle=col;
+    if(p.k==='s'){ X.fillRect(h[0]-9,h[1]-9,18,18); } else { X.beginPath(); X.arc(h[0],h[1],11,0,6.283); X.fill(); } X.shadowBlur=0; }
+  for(const sp of st.sparks){ X.globalAlpha=sp.life; X.fillStyle=sp.c; X.fillRect(sp.x-3,sp.y-3,6,6); } X.globalAlpha=1;
+  X.restore();
+  // viewport frame + corner brackets
+  X.strokeStyle='rgba(232,196,138,.35)'; X.lineWidth=2; X.strokeRect(VX+30,VY,VW-60,VH);
+  const bl=40; X.strokeStyle=COL.sand; X.lineWidth=5; [[VX+30,VY,1,1],[VX+VW-30,VY,-1,1],[VX+30,VY+VH,1,-1],[VX+VW-30,VY+VH,-1,-1]].forEach(([x,y,dx,dy])=>{ X.beginPath(); X.moveTo(x+dx*bl,y); X.lineTo(x,y); X.lineTo(x,y+dy*bl); X.stroke(); });
+  txt('ZOOM '+cam(f)[2].toFixed(2)+'x', VX+48, VY+VH-20, '20px '+MONO, COL.dim);
+  if(st.flash>.02){ X.fillStyle=`rgba(255,255,255,${st.flash*.6})`; X.fillRect(VX,VY,VW,VH); }
+}
+function drawHUD(f){
+  X.fillStyle=COL.bg; X.fillRect(0,0,W,290);
+  txt('SIGNAL & NOISE  ·  DARPA LINEAGE  ·  MINC', 40, 64, 'bold 24px '+MONO, COL.sand);
+  txt('ASSUME THE BACKBONE IS COMPROMISED.', 40, 122, '900 44px '+SANS, COL.white);
+  // scoreboard row
+  const sb=[['MOSAIC DELIVERED',st.mosaicOk,COL.cy],['STATIC DELIVERED',st.staticOk,COL.white],['STATIC LOST',st.staticLost,COL.red]];
+  sb.forEach(([l,v,c],i)=>{ const x=40+i*340; rrect(x,150,320,118,12); X.fillStyle='#09141b'; X.fill(); X.strokeStyle=c+'88'; X.lineWidth=2; X.stroke();
+    txt(l, x+18, 186, 'bold 20px '+MONO, c); txt(String(v), x+18, 250, 'bold 54px '+MONO, c); });
+}
+function drawLower(f){
+  const y0=1410; X.fillStyle=COL.bg; X.fillRect(0,y0-20,W,H-y0+20);
+  // terminal lower-third
+  rrect(40,y0,1000,150,12); X.fillStyle='#09141b'; X.fill(); X.strokeStyle='rgba(56,225,255,.4)'; X.lineWidth=2; X.stroke();
+  const r=ROUTES[st.route]; const head=`$ route --best   [${r.name} · ~${r.ms} ms]`;
+  txt(head, 64, y0+50, 'bold 28px '+MONO, COL.dim);
+  const line=r.hops.slice(0, Math.floor(st.typed)); txt(line+(f%20<10?'█':''), 64, y0+108, 'bold 38px '+MONO, r.col===COL.white?COL.white:r.col);
+  // caption with fade + slide
+  let bi=0; for(let i=0;i<BEATS.length;i++) if(f>=BEATS[i][0]) bi=i; const b=BEATS[bi], age=f-b[0], a=clamp(age/10,0,1);
+  X.globalAlpha=a; const yoff=(1-a)*30; X.fillStyle=COL.cy; X.fillRect(40,y0+190+yoff,8,150);
+  X.font='bold 46px '+SANS; X.fillStyle=COL.white; X.textAlign='left'; const words=b[1].split(' '); let line2='', ly=y0+240+yoff;
+  for(const w of words){ const t=line2?line2+' '+w:w; if(X.measureText(t).width>950){ X.fillText(line2,70,ly); ly+=58; line2=w; } else line2=t; } X.fillText(line2,70,ly); X.globalAlpha=1;
+  txt('Isaiah C. Anderson', 40, H-46, 'bold 26px '+SANS, COL.white); txt('github.com/N1ghtsh1ft1', W-40, H-46, '26px '+MONO, COL.dim, 'right');
+  X.fillStyle=COL.cy; X.fillRect(0,H-10,W*f/T.END,10);
+}
+function drawTitle(f){ // kinetic intro
+  const t=f/T.titleEnd; X.fillStyle=`rgba(5,11,16,${t<.75?1:1-(t-.75)/.25})`; X.fillRect(0,0,W,H);
+  const lines=['ASSUME','THE BACKBONE','IS','COMPROMISED.']; lines.forEach((l,i)=>{ const d=clamp((f-i*7)/10,0,1); X.globalAlpha=d*(t<.75?1:1-(t-.75)/.25);
+    X.font='900 '+(i===3?118:96)+'px '+SANS; X.fillStyle=i===3?COL.cy:COL.white; X.textAlign='center'; X.fillText(l, W/2+(1-ease(d))*-200, 760+i*125); }); X.globalAlpha=1; }
+function drawCard(f){
+  const a=clamp((f-T.card)/14,0,1); X.fillStyle=`rgba(5,11,16,${.94*a})`; X.fillRect(0,0,W,H); X.globalAlpha=a;
+  X.textAlign='center'; X.font='900 88px '+SANS; X.fillStyle=COL.white; X.fillText('NO SINGLE PATH.',W/2,560); X.fillStyle=COL.cy; X.fillText('NO SINGLE POINT',W/2,670); X.fillText('OF FAILURE.',W/2,780);
+  X.font='bold 40px '+MONO; X.fillStyle=COL.white; X.fillText(`MOSAIC ${st.mosaicOk} delivered`,W/2,930); X.fillStyle=COL.red; X.fillText(`STATIC ${st.staticLost} lost`,W/2,990);
+  rrect(140,1110,800,230,20); X.fillStyle='#09141b'; X.fill(); X.strokeStyle=COL.sand; X.lineWidth=3; X.stroke();
+  X.font='bold 38px '+SANS; X.fillStyle=COL.sand; X.fillText('▶  TRY IT YOURSELF',W/2,1180); X.font='bold 34px '+MONO; X.fillStyle=COL.white; X.fillText('cut the fiber · drop a jammer',W/2,1240); X.fillStyle=COL.cy; X.fillText('link in the comments',W/2,1300);
+  X.font='bold 44px '+SANS; X.fillStyle=COL.amb; X.fillText('Where’s the single point',W/2,1470); X.fillText('of failure in YOUR network?',W/2,1530);
+  X.font='bold 30px '+MONO; X.fillStyle=COL.dim; X.fillText('github.com/N1ghtsh1ft1/signal-and-noise',W/2,1680); X.globalAlpha=1; }
+
+window.frame=function(f){ if(f===0||f!==lastF+1){ resetSim(); for(let k=0;k<f;k++) step(k); } step(f); lastF=f;
+  drawHUD(f); drawMap(f); drawLower(f); if(f<T.titleEnd) drawTitle(f); if(f>=T.card) drawCard(f); };
+window.TOTAL=T.END; window.T=T; window.getEvents=()=>st.events; window.ready=true;
+</script></body></html>
