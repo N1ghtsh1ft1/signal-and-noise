@@ -1,0 +1,28 @@
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--accent:#00d0ff}
+body{background:#05080e;color:#dbe4f0;font-family:"DejaVu Sans Condensed","DejaVu Sans",sans-serif;overflow:hidden;position:relative;
+ background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:36px 36px}
+.topbar{display:flex;justify-content:space-between;align-items:center;font:700 17px "DejaVu Sans Mono",monospace;letter-spacing:3px}
+.series{color:#05080e;background:var(--accent);padding:7px 12px;border-radius:5px}
+.no{color:var(--accent);border:1.5px solid var(--accent);padding:6px 12px;border-radius:5px}
+.foot{position:absolute;left:34px;right:34px;bottom:24px;display:flex;justify-content:space-between;font-size:17px;color:#8a9bb2;border-top:1.5px solid #1b2740;padding-top:12px}
+.foot b{color:#fff}
+/* design-tool frame around the art */
+.frame{position:relative;border:1.5px solid #22314d;border-radius:12px;overflow:hidden;background:#05080e;display:flex}
+.frame .side{width:var(--side);flex:none;border-right:1.5px solid #1b2740;padding:16px 14px;font:13px "DejaVu Sans Mono",monospace;color:#8a9bb2;display:flex;flex-direction:column;gap:12px;background:rgba(8,12,22,.95)}
+.frame .side h4{color:#fff;font:700 15px "DejaVu Sans Mono",monospace;letter-spacing:2px}
+.frame .side .concept{color:var(--accent);font-size:13px;line-height:1.35}
+.frame .side .blurb{font:italic 14px/1.45 "DejaVu Serif",serif;color:#b9c6d8}
+.frame .kv{display:flex;justify-content:space-between;border-bottom:1px dashed #1b2740;padding:3px 0}
+.frame .kv span:last-child{color:#e8eef8}
+.frame .tags{display:flex;flex-wrap:wrap;gap:6px}
+.frame .tags span{border:1px solid #33476b;border-radius:20px;padding:2px 8px;font-size:11.5px;color:#b9c6d8}
+.frame .btns{display:flex;gap:6px;margin-top:auto}
+.frame .btns span{flex:1;text-align:center;border:1px solid var(--accent);color:var(--accent);border-radius:5px;padding:5px 0;font-weight:700;letter-spacing:1px}
+.frame .btns span.f{background:var(--accent);color:#05080e}
+.frame .stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center}
+.frame canvas{display:block}
+.frame .phase{position:absolute;left:12px;top:12px;font:700 14px "DejaVu Sans Mono",monospace;letter-spacing:2px;color:#05080e;background:var(--accent);padding:5px 9px;border-radius:4px}
+.frame .seed{position:absolute;right:12px;top:12px;font:13px "DejaVu Sans Mono",monospace;color:#8a9bb2;background:rgba(5,8,14,.75);padding:4px 8px;border-radius:4px}
+.frame .param{display:flex;flex-direction:column;gap:3px}
+.frame .bar{height:4px;background:#1b2740;border-radius:2px;overflow:hidden}.frame .bar i{display:block;height:100%;background:var(--accent)}

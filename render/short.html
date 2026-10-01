@@ -1,0 +1,44 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="frame.css">
+<style>
+body{width:1080px;height:1920px}
+.wrap{padding:60px 34px 0}
+.hook{font:900 66px/1.04 "DejaVu Sans Condensed","DejaVu Sans",sans-serif;text-transform:uppercase;margin:26px 0 30px;letter-spacing:-.5px}
+.hook span:last-child{color:var(--accent)}
+.frame .side{display:none}
+.frame .phase{font-size:22px;padding:8px 12px}.frame .seed{font-size:18px}
+.beat{margin-top:34px;font:700 42px/1.25 "DejaVu Sans",sans-serif;color:#fff;min-height:160px;border-left:6px solid var(--accent);padding-left:22px}
+.trade{margin-top:26px;font-size:28px;line-height:1.35;color:#ffd76a;background:rgba(40,30,5,.55);border:1.5px solid #5a4a14;border-radius:12px;padding:16px 20px}
+.trade b{font:700 16px "DejaVu Sans Mono",monospace;letter-spacing:2px;display:block;margin-bottom:6px;color:#ffc93c}
+.prog{position:absolute;left:0;bottom:0;height:8px;background:var(--accent)}
+.foot{bottom:40px;font-size:24px}
+</style></head><body>
+<div class="wrap">
+ <div class="topbar"><span class="series">SIGNAL &amp; NOISE</span><span class="no" id="no"></span></div>
+ <div class="hook" id="hook"></div>
+ <div id="art"></div>
+ <div class="beat" id="beat"></div>
+ <div class="trade"><b>TRADER&rsquo;S TRANSLATION</b><span id="trade"></span></div>
+</div>
+<div class="foot"><span><b>Isaiah C. Anderson</b></span><span>github.com/N1ghtsh1ft1</span></div>
+<div class="prog" id="prog"></div>
+<script src="../src/pieces.js"></script><script src="../src/content.js"></script><script src="frame.js"></script>
+<script>
+const q=new URLSearchParams(location.search), id=q.get('p'), seed=+q.get('seed')||42;
+const CFG={'holdings':{frames:450,spf:1},'slime-path':{frames:450,spf:3},'baseline':{frames:450,spf:1},'containment':{frames:450,spf:1},'packet-walk':{frames:600,spf:1,denyAt:300}};
+const cfg=CFG[id], f=buildFrame(document.getElementById('art'), id, seed, 1012, 1012, 1012, 1);
+const copy=SN_COPY[id];
+document.getElementById('no').textContent=f.C.meta.no+' / '+f.C.meta.title.toUpperCase();
+document.getElementById('hook').innerHTML='<span>'+copy.hook[0]+'</span><br><span>'+copy.hook[1]+'</span>';
+document.getElementById('trade').textContent=copy.trade;
+window.TOTAL=cfg.frames; if(id==='holdings') f.piece.spreadEvery=45;
+window.frame=function(i){
+  if(cfg.denyAt && i===cfg.denyAt){ f.p.denyChance=100; f.piece.reset(seed); }
+  for(let k=0;k<cfg.spf;k++) f.piece.step();
+  f.piece.draw(); f.refresh();
+  const u=i/cfg.frames; let b=copy.beats[0][1]; for(const [at,txt] of copy.beats) if(u>=at) b=txt;
+  document.getElementById('beat').textContent=b;
+  document.getElementById('prog').style.width=(100*u)+'%';
+};
+window.ready=true;
+</script></body></html>

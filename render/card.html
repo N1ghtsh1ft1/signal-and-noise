@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="frame.css">
+<style>
+body{width:1080px;height:1350px}
+.wrap{padding:30px 34px 0}
+.hook{font:900 50px/1.04 "DejaVu Sans Condensed","DejaVu Sans",sans-serif;letter-spacing:-.5px;text-transform:uppercase;margin:14px 0 18px}
+.hook span:last-child{color:var(--accent)}
+.art{width:1012px;height:762px}
+.strip{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.strip div{border:1.5px solid #22314d;border-radius:10px;padding:12px 14px;font-size:19px;line-height:1.35;background:rgba(12,18,32,.9)}
+.strip b{display:block;font:700 13px "DejaVu Sans Mono",monospace;letter-spacing:2px;margin-bottom:5px}
+.see{margin-top:14px;border-left:4px solid var(--accent);padding:4px 0 4px 14px;font-size:19px;line-height:1.4;color:#c9d5e6}.see b{display:block;font:700 13px "DejaVu Sans Mono",monospace;letter-spacing:2px;color:var(--accent);margin-bottom:4px}
+</style></head><body>
+<div class="wrap">
+ <div class="topbar"><span class="series">SIGNAL &amp; NOISE</span><span class="no" id="no"></span></div>
+ <div class="hook" id="hook"></div>
+ <div class="art" id="art"></div>
+ <div class="see"><b>WHAT YOU&rsquo;RE SEEING</b><span id="see"></span></div>
+ <div class="strip"><div><b style="color:#00d0ff">SECURITY</b><span id="sec"></span></div><div><b style="color:#ffc93c">TRADER&rsquo;S TRANSLATION</b><span id="trade"></span></div></div>
+</div>
+<div class="foot"><span><b>Isaiah C. Anderson</b> · generative security notes</span><span>github.com/N1ghtsh1ft1</span></div>
+<script src="../src/pieces.js"></script><script src="../src/content.js"></script><script src="frame.js"></script>
+<script>
+const q=new URLSearchParams(location.search), id=q.get('p'), seed=+q.get('seed')||42, steps=+q.get('steps')||300;
+const f=buildFrame(document.getElementById('art'), id, seed, 1012, 762, 760);
+const copy=SN_COPY[id];
+document.getElementById('no').textContent=f.C.meta.no+' / '+f.C.meta.title.toUpperCase();
+document.getElementById('hook').innerHTML='<span>'+copy.hook[0]+'</span><br><span>'+copy.hook[1]+'</span>';
+document.getElementById('sec').textContent=copy.sec; document.getElementById('trade').textContent=copy.trade;
+document.getElementById('see').textContent=copy.beats.map(b=>b[1]).join(' ');
+for(let i=0;i<steps;i++){f.piece.step(); if(id==='baseline')f.piece.draw();}
+f.piece.draw(); f.refresh(); window.done=true;
+</script></body></html>
