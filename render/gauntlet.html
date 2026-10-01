@@ -58,7 +58,7 @@ window.frame=function(f){
   const badges={}, hi=[]; let hiColor='#ff4d6d';
   done.forEach(a=>{ if(a.badge){ const s=a.path[a.path.length-1]; badges[s]={t:a.badge,c:COL[a.ty]}; } });
   if(A[5].start+120<=f){ badges.ids={t:'ALERT',c:'#ff9a5a'}; badges.siem={t:'HOST ISOLATED',c:'#b18cff'}; }
-  T.draw(ctx,1012,1012,{types:true,badges,highlight:cur?[cur.path[cur.path.length-1]].concat(cur.long&&f-cur.start>95?['ids','siem']:[]):[],hiColor:cur?COL[cur.ty]:'#00d0ff',
+  T.draw(ctx,1012,1012,{big:true,types:true,badges,highlight:cur?[cur.path[cur.path.length-1]].concat(cur.long&&f-cur.start>95?['ids','siem']:[]):[],hiColor:cur?COL[cur.ty]:'#00d0ff',
     over:(c)=>{
       if(!cur) return;
       const lt=f-cur.start, travel=cur.long?95:45, u=Math.min(1,lt/travel), p=along(cur.path,ease(u));

@@ -1,0 +1,63 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1080px;height:1920px;background:#020805;color:#c9f7da;font-family:"DejaVu Sans Mono",monospace;overflow:hidden;position:relative;
+ background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px)}
+.top{position:absolute;left:34px;right:34px;top:54px;display:flex;justify-content:space-between;font-size:20px;letter-spacing:4px}
+.cls{border:2px solid #ffb63d;color:#ffb63d;padding:6px 12px}
+.idx{color:#39ff88;padding:8px 0}
+.yr{position:absolute;left:34px;top:120px;font:800 120px/1 "DejaVu Sans Mono",monospace;color:#ffb63d;text-shadow:0 0 30px rgba(255,182,61,.45)}
+.ttl{position:absolute;left:34px;top:250px;font:800 54px/1.05 "DejaVu Sans Mono",monospace;color:#39ff88;text-shadow:0 0 20px rgba(57,255,136,.45)}
+canvas{position:absolute;left:34px;top:350px;width:1012px;height:1012px;border:2px solid rgba(57,255,136,.25)}
+.phase{position:absolute;left:50px;top:366px;background:#39ff88;color:#020805;font:800 22px "DejaVu Sans Mono",monospace;letter-spacing:3px;padding:6px 12px}
+.beat{position:absolute;left:34px;right:34px;top:1400px;font:700 44px/1.25 "DejaVu Sans",sans-serif;color:#fff;border-left:8px solid #39ff88;padding-left:24px;min-height:170px}
+.why{position:absolute;left:34px;right:34px;top:1610px;font-size:28px;line-height:1.35;color:#ffd58a;border:2px solid rgba(255,182,61,.45);padding:16px 20px;background:rgba(40,25,0,.35)}
+.why b{display:block;font-size:17px;letter-spacing:3px;color:#ffb63d;margin-bottom:6px}
+.foot{position:absolute;left:34px;right:34px;bottom:34px;display:flex;justify-content:space-between;font-size:22px;color:#7fb894}
+.foot b{color:#fff}
+.prog{position:absolute;left:0;bottom:0;height:8px;background:#39ff88}
+.card{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#020805;padding:60px}
+.card h1{font:800 92px/1.02 "DejaVu Sans Mono",monospace;color:#39ff88;text-shadow:0 0 30px rgba(57,255,136,.5)}
+.card h1 em{font-style:normal;color:#ffb63d}
+.card p{font-size:38px;margin-top:40px;color:#c9f7da;line-height:1.35}
+.card .q{color:#ffb63d;font-weight:800}
+</style></head><body>
+<div class="top"><span class="cls">DARPA LINEAGE</span><span class="idx" id="idx"></span></div>
+<div class="yr" id="yr"></div><div class="ttl" id="ttl"></div>
+<canvas id="cv" width="1012" height="1012"></canvas><div class="phase" id="ph"></div>
+<div class="beat" id="beat"></div>
+<div class="why"><b id="whyh">WHY IT MATTERS</b><span id="why"></span></div>
+<div class="foot"><span><b>Isaiah C. Anderson</b></span><span>github.com/N1ghtsh1ft1</span></div>
+<div class="prog" id="prog"></div>
+<div class="card" id="intro"><h1 style="font-size:76px">The agency behind the internet<br><em>also shaped how we defend it.</em></h1><p>3 ideas. 3 simulations.<br>1969 → 2025.</p></div>
+<div class="card" id="outro"><h1>Same idea,<br><em>56 years apart.</em></h1><p>Route around damage. Map what you own.<br>Find the bug before they do.</p><p class="q">Which one do you want broken down next?</p></div>
+<script src="../src/darpa.js"></script>
+<script>
+const SEG=[
+ {m:0, yr:'1969', ttl:'ARPANET: "LO"', frames:300, spf:1, why:'TCP sequence numbers rebuild your data. Security tools reassemble streams the same way to inspect them.',
+  beats:[[0,'First message ever sent: "LOGIN". The system crashed after "LO".'],[.25,'Packet switching: the message is chopped into numbered pieces.'],[.45,'A node goes down. Packets find another way.'],[.75,'Pieces arrive out of order. Sequence numbers put them back.']]},
+ {m:1, yr:'2012', ttl:'PLAN X: MAP IT', frames:300, spf:3, why:'Asset inventory is CIS Control #1. You can’t defend what you don’t know is there.',
+  beats:[[0,'DARPA wanted to see cyberspace like a battlefield.'],[.25,'Sweep 1: which hosts are alive.'],[.5,'Sweep 2: which ports are open.'],[.75,'Sweep 3: what’s risky. Telnet = red. SMB / RDP = amber.']]},
+ {m:2, yr:'2016 → 2025', ttl:'MACHINE SPEED', frames:330, spf:1, why:'AIxCC 2025: AI systems found 86% of planted bugs and patched 68% of them, about 45 min per patch.',
+  beats:[[0,'A fuzzer fires mutated inputs at a program, millions of times.'],[.28,'Inputs that reach new code are kept. Coverage spreads.'],[.5,'Red = crash found. The system writes and tests a patch.'],[.75,'2016: machines hack + patch, no humans. 2025: AI does it on real code.']]}
+];
+const INTRO=60, OUTRO=110; let t=INTRO; SEG.forEach(s=>{s.start=t; t+=s.frames;}); const TOTAL=t+OUTRO; window.TOTAL=TOTAL;
+const cv=document.getElementById('cv'); let cur=-1, mod=null;
+window.frame=function(f){
+  document.getElementById('intro').style.display=f<INTRO?'flex':'none';
+  document.getElementById('outro').style.display=f>=TOTAL-OUTRO?'flex':'none';
+  document.getElementById('prog').style.width=(100*f/TOTAL)+'%';
+  const si=SEG.findIndex(s=>f>=s.start&&f<s.start+s.frames); if(si<0) return;
+  const s=SEG[si];
+  if(si!==cur){ cur=si; mod=new DARPA.modules[s.m](cv); mod.reset(si===0?7:si===1?11:5); if(s.m===0) mod.autoKill=true;
+    document.getElementById('yr').textContent=s.yr; document.getElementById('ttl').textContent=s.ttl; document.getElementById('why').textContent=s.why;
+    document.getElementById('idx').textContent=(si+1)+' / 3'; }
+  const lf=f-s.start;
+  if(s.m===2 && (lf===120||lf===180)) mod.click(500+lf, 520);
+  if(s.m===1 && lf===220){ const h=mod.hosts.find(h=>h.risk===2)||mod.hosts[0]; mod.sel=h; }
+  for(let k=0;k<s.spf;k++) mod.step(); mod.draw();
+  document.getElementById('ph').textContent=mod.phase();
+  const u=lf/s.frames; let b=s.beats[0][1]; for(const [a,txt] of s.beats) if(u>=a) b=txt; document.getElementById('beat').textContent=b;
+};
+window.ready=true;
+</script></body></html>
