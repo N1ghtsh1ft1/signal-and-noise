@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Signal &amp; Noise — generative security notes</title>
+<meta name="description" content="Live generative art that simulates real security ideas: segmentation, lateral movement, anomaly detection, incident response and packet flow.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#05080e;--panel:#0b111d;--line:#1b2740;--mute:#8a9bb2;--text:#dbe4f0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:36px 36px}
+header{max-width:1240px;margin:0 auto;padding:48px 20px 20px}
+.kicker{font:700 13px ui-monospace,"SFMono-Regular",Menlo,monospace;letter-spacing:3px;color:#05080e;background:#00d0ff;display:inline-block;padding:6px 10px;border-radius:4px}
+h1{font-size:clamp(34px,6vw,64px);line-height:1;margin:18px 0 12px;letter-spacing:-1px}
+h1 span{color:#00d0ff}
+.lede{max-width:760px;color:#b9c6d8;font-size:18px;line-height:1.55}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font:13px ui-monospace,Menlo,monospace;color:var(--mute)}
+main{max-width:1240px;margin:0 auto;padding:10px 20px 60px;display:grid;gap:28px}
+.piece{display:grid;grid-template-columns:minmax(0,1fr) 340px;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.stage{position:relative;background:#05080e;display:flex;align-items:flex-start;justify-content:center}
+.stage canvas{width:100%;height:auto;aspect-ratio:1;display:block}
+.phase{position:absolute;left:12px;top:12px;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:2px;color:#05080e;background:var(--a);padding:5px 9px;border-radius:4px}
+.side{padding:20px;display:flex;flex-direction:column;gap:14px;border-left:1.5px solid var(--line);font-size:14px}
+.side h2{font:700 15px ui-monospace,Menlo,monospace;letter-spacing:2px}
+.side .concept{color:var(--a);font:13px ui-monospace,Menlo,monospace}
+.hook{font-size:22px;font-weight:800;line-height:1.15}
+.hook em{font-style:normal;color:var(--a)}
+.blurb{font:italic 15px/1.5 Georgia,serif;color:#b9c6d8}
+.copy p{margin:6px 0;line-height:1.45;color:#c9d5e6}
+.copy b{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:2px;display:block;color:var(--a)}
+.copy .tr b{color:#ffc93c}
+.sec-title{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:2px;color:var(--mute);border-bottom:1px solid var(--line);padding-bottom:5px}
+.seed{display:flex;gap:6px;align-items:center;font:13px ui-monospace,Menlo,monospace}
+.seed input{width:76px;background:#05080e;border:1px solid var(--line);color:var(--text);padding:6px;border-radius:5px;font:inherit}
+button{background:transparent;border:1px solid var(--a);color:var(--a);border-radius:5px;padding:6px 9px;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:1px;cursor:pointer}
+button.f{background:var(--a);color:#05080e}
+button:focus-visible,input:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.param label{display:flex;justify-content:space-between;font:12px ui-monospace,Menlo,monospace;color:var(--mute)}
+.param label span{color:var(--text)}
+input[type=range]{width:100%;accent-color:var(--a)}
+.ro{font:12px ui-monospace,Menlo,monospace;color:var(--mute)}
+.ro div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding:3px 0}.ro div span:last-child{color:var(--text)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}.tags span{border:1px solid #33476b;border-radius:20px;padding:2px 9px;font:11.5px ui-monospace,Menlo,monospace;color:#b9c6d8}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+footer{max-width:1240px;margin:0 auto;padding:0 20px 50px;color:var(--mute);font-size:14px}
+footer a{color:#00d0ff}
+@media (max-width:860px){.piece{grid-template-columns:1fr}.side{border-left:0;border-top:1.5px solid var(--line)}}
+</style></head><body>
+<header>
+ <span class="kicker">SIGNAL &amp; NOISE</span>
+ <h1>Security ideas, <span>running live.</span></h1>
+ <p class="lede">Each piece below is a real simulation, not a drawing. Change the seed or the sliders and the system re-runs. The security idea comes out of how the system behaves, with a translation for traders built in.</p>
+ <div class="legend"><span>by Isaiah C. Anderson</span><span>Security+ · SOC analyst track</span><a style="color:#00d0ff" href="https://github.com/N1ghtsh1ft1">github.com/N1ghtsh1ft1</a></div>
+</header>
+<main id="gallery"></main>
+<footer>Built with plain JavaScript and canvas, no libraries. Every piece is seeded: same seed, same picture. Example IPs come from documentation ranges (RFC 5737).</footer>
+<script src="src/pieces.js"></script><script src="src/content.js"></script>
+<script>
+const ACC={'holdings':'#ff6b8a','slime-path':'#3ee0c0','baseline':'#00d0ff','containment':'#ff9a5a','packet-walk':'#ffc93c'};
+const SPF={'holdings':1,'slime-path':1,'baseline':1,'containment':1,'packet-walk':1};
+const gallery=document.getElementById('gallery');
+SN.pieces.forEach(C=>{
+  const m=C.meta, copy=SN_COPY[m.id], el=document.createElement('section');
+  el.className='piece'; el.style.setProperty('--a',ACC[m.id]); el.id=m.id;
+  const defaults={}; for(const k in m.params) defaults[k]=m.params[k].value;
+  el.innerHTML=`<div class="stage"><canvas width="720" height="720" aria-label="${m.title}: ${m.concept}"></canvas><div class="phase"></div></div>
+  <div class="side">
+   <h2>${m.no} · ${m.title.toUpperCase()}</h2><div class="concept">${m.concept}</div>
+   <div class="hook">${copy.hook[0]} <em>${copy.hook[1]}</em></div>
+   <div class="blurb">${m.blurb}</div>
+   <div class="copy"><p><b>WHAT YOU'RE SEEING</b>${copy.beats.map(b=>b[1]).join(' ')}</p><p><b>SECURITY</b>${copy.sec}</p><p class="tr"><b>TRADER'S TRANSLATION</b>${copy.trade}</p></div>
+   <div class="sec-title">SEED</div>
+   <div class="seed"><button data-a="prev" aria-label="Previous seed">◂</button><input type="number" value="42" aria-label="Seed"><button data-a="next" aria-label="Next seed">▸</button><button data-a="rand">RANDOM</button></div>
+   <div class="sec-title">PARAMETERS</div>
+   ${Object.entries(m.params).map(([k,d])=>`<div class="param"><label>${d.label}<span data-v="${k}">${d.value}</span></label><input type="range" data-k="${k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.value}"></div>`).join('')}
+   <div class="sec-title">LIVE READOUT</div><div class="ro"></div>
+   <div class="tags">${m.tags.map(t=>`<span>${t}</span>`).join('')}</div>
+   <div class="btns"><button class="f" data-a="regen">REGEN</button><button data-a="reset">RESET</button><button data-a="png">PNG</button></div>
+  </div>`;
+  gallery.appendChild(el);
+  const cv=el.querySelector('canvas'), seedIn=el.querySelector('.seed input'), p={...defaults};
+  const piece=new C(cv,p); let visible=false, frameN=0;
+  const regen=()=>{ piece.reset(+seedIn.value||1); frameN=0; };
+  regen();
+  el.querySelectorAll('input[type=range]').forEach(r=>r.addEventListener('input',()=>{ p[r.dataset.k]=+r.value; el.querySelector(`[data-v="${r.dataset.k}"]`).textContent=r.value; }));
+  el.querySelectorAll('input[type=range]').forEach(r=>r.addEventListener('change',regen));
+  seedIn.addEventListener('change',regen);
+  el.addEventListener('click',e=>{ const a=e.target.dataset&&e.target.dataset.a; if(!a)return;
+    if(a==='prev'){seedIn.value=Math.max(1,+seedIn.value-1);regen();}
+    if(a==='next'){seedIn.value=+seedIn.value+1;regen();}
+    if(a==='rand'){seedIn.value=1+Math.floor(Math.random()*9999);regen();}
+    if(a==='regen')regen();
+    if(a==='reset'){Object.assign(p,defaults);el.querySelectorAll('input[type=range]').forEach(r=>{r.value=defaults[r.dataset.k];el.querySelector(`[data-v="${r.dataset.k}"]`).textContent=r.value;});seedIn.value=42;regen();}
+    if(a==='png'){const l=document.createElement('a');l.download=`${m.id}-seed${seedIn.value}.png`;l.href=cv.toDataURL('image/png');l.click();}
+  });
+  new IntersectionObserver(es=>es.forEach(x=>visible=x.isIntersecting),{threshold:.1}).observe(el);
+  const ro=el.querySelector('.ro'), ph=el.querySelector('.phase');
+  (function loop(){ if(visible){ for(let i=0;i<SPF[m.id];i++) piece.step(); piece.draw(); if(frameN++%6===0){ ro.innerHTML=piece.readouts().map(([a,b])=>`<div><span>${a}</span><span>${b}</span></div>`).join(''); ph.textContent=piece.phase(); } } requestAnimationFrame(loop); })();
+});
+</script>
+</body></html>
