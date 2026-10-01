@@ -3,7 +3,7 @@
 (function (G) {
   'use strict';
   const Z = { // zones
-    edge: { x: 300, y: 20, w: 400, h: 330, label: 'EDGE / PERIMETER', c: '#ff4d6d' },
+    edge: { x: 300, y: 20, w: 400, h: 330, label: 'EDGE', c: '#ff4d6d' },
     dmz: { x: 640, y: 215, w: 345, h: 230, label: 'SCREENED SUBNET (DMZ)', c: '#ffc93c' },
     users: { x: 15, y: 545, w: 450, h: 225, label: 'USER VLAN 10', c: '#3ddc84' },
     servers: { x: 535, y: 545, w: 450, h: 225, label: 'SERVER VLAN 20', c: '#00d0ff' },
@@ -20,9 +20,9 @@
     ids: { x: 290, y: 440, t: 'IDS SENSOR', s: 'SPAN copy', k: 'box', ctl: 'ids', ty: 'D' },
     proxy: { x: 710, y: 440, t: 'FWD PROXY', s: 'URL filter', k: 'box', ctl: 'proxy', ty: 'P' },
     acc: { x: 240, y: 600, t: 'ACCESS SW', s: '802.1X · port-sec', k: 'switch', ctl: 'nac', ty: 'PC' },
-    pc1: { x: 95, y: 710, t: 'PC', s: '10.10.10.21', k: 'pc' },
+    pc1: { x: 90, y: 710, t: 'PC', s: '10.10.10.21', k: 'pc' },
     pc2: { x: 240, y: 710, t: 'PC', s: '10.10.10.22', k: 'pc' },
-    pc3: { x: 385, y: 710, t: 'LAPTOP', s: '10.10.10.23', k: 'pc' },
+    pc3: { x: 390, y: 710, t: 'LAPTOP', s: '10.10.10.23', k: 'pc' },
     dist: { x: 760, y: 600, t: 'SERVER SW', s: 'ACL per VLAN', k: 'switch' },
     db: { x: 640, y: 710, t: 'DATABASE', s: '10.10.20.10', k: 'server' },
     file: { x: 880, y: 710, t: 'FILE SRV', s: '10.10.20.11', k: 'server' },
@@ -57,7 +57,7 @@
       const z = Z[id], a = zvis(id) ? 1 : dim;
       ctx.globalAlpha = a; ctx.setLineDash([8, 6]); ctx.strokeStyle = z.c; ctx.lineWidth = 2;
       ctx.fillStyle = z.c + '10'; rr(ctx, z.x, z.y, z.w, z.h, 14); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = z.c; ctx.font = '700 15px "DejaVu Sans Mono", monospace'; ctx.textAlign = 'left'; ctx.fillText(z.label, z.x + 12, z.y + 22);
+      ctx.fillStyle = z.c; ctx.font = '700 ' + (o.big ? 18 : 15) + 'px "DejaVu Sans Mono", monospace'; ctx.textAlign = 'left'; ctx.fillText(z.label, z.x + 12, z.y + (o.big ? 25 : 22));
     }
     ctx.globalAlpha = 1;
     // links
@@ -67,7 +67,7 @@
       ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
     }
     { const A = N[SPAN[0]], B = N[SPAN[1]]; ctx.globalAlpha = vis('ids') ? 1 : dim; ctx.setLineDash([6, 6]); ctx.strokeStyle = '#ff9a5a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = '#ff9a5a'; ctx.font = '700 13px "DejaVu Sans Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText('SPAN / TAP (copy)', (A.x + B.x) / 2, A.y - 34); }
+      ctx.fillStyle = '#ff9a5a'; ctx.font = '700 13px "DejaVu Sans Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText('SPAN', (A.x + B.x) / 2, A.y - 12); }
     ctx.globalAlpha = 1;
     // extra overlays (packets etc.) drawn by caller under nodes
     if (o.under) o.under(ctx);
@@ -75,14 +75,15 @@
     for (const id in N) {
       const n = N[id], on = vis(id), h = hi.includes(id);
       ctx.globalAlpha = on ? 1 : dim;
-      const w = 128, hh = 54;
+      const w = o.big ? 142 : 128, hh = o.big ? 50 : 54;
       if (h) { ctx.shadowColor = o.hiColor || '#00d0ff'; ctx.shadowBlur = 28; }
       ctx.fillStyle = h ? '#0d1a2e' : '#0a101c'; ctx.strokeStyle = h ? (o.hiColor || '#00d0ff') : 'rgba(140,170,210,.6)'; ctx.lineWidth = h ? 3.5 : 2;
       if (n.k === 'cloud') { ctx.beginPath(); ctx.ellipse(n.x, n.y, 95, 40, 0, 0, 6.283); ctx.fill(); ctx.stroke(); }
       else { rr(ctx, n.x - w / 2, n.y - hh / 2, w, hh, 9); ctx.fill(); ctx.stroke(); }
       ctx.shadowBlur = 0;
-      ctx.textAlign = 'center'; ctx.fillStyle = '#eef3fb'; ctx.font = '700 15px "DejaVu Sans", sans-serif'; ctx.fillText(n.t, n.x, n.y - 2);
-      ctx.fillStyle = '#8a9bb2'; ctx.font = '12.5px "DejaVu Sans Mono", monospace'; ctx.fillText(n.s, n.x, n.y + 16);
+      ctx.textAlign = 'center'; ctx.fillStyle = '#eef3fb'; if (o.big) { let fs = 21; ctx.font = '800 ' + fs + 'px "DejaVu Sans Condensed", sans-serif'; while (ctx.measureText(n.t).width > w - 10 && fs > 14) { fs--; ctx.font = '800 ' + fs + 'px "DejaVu Sans Condensed", sans-serif'; } ctx.fillText(n.t, n.x, n.y + fs * .36); }
+      else { ctx.font = '700 15px "DejaVu Sans", sans-serif'; ctx.fillText(n.t, n.x, n.y - 2);
+      ctx.fillStyle = '#8a9bb2'; ctx.font = '13px "DejaVu Sans Mono", monospace'; ctx.fillText(n.s, n.x, n.y + 16); }
       if (o.types && n.ty && on) {
         const C = { P: '#3ddc84', D: '#ff9a5a', C: '#b18cff' }; let bx = n.x + w / 2 - 4;
         [...n.ty].reverse().forEach(t => { ctx.fillStyle = C[t]; ctx.beginPath(); ctx.arc(bx, n.y - hh / 2, 13, 0, 6.283); ctx.fill();
