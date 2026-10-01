@@ -1,0 +1,119 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="frame.css">
+<style>
+body{width:1080px;height:1350px;--accent:#00d0ff}
+.wrap{padding:36px 44px 0}
+.top{display:flex;justify-content:space-between;align-items:center}
+.series{font:700 17px "DejaVu Sans Mono",monospace;letter-spacing:3px;color:#05080e;background:var(--accent);padding:7px 12px;border-radius:5px}
+.dots{display:flex;gap:7px}.dots i{width:22px;height:6px;border-radius:3px;background:#22314d}.dots i.on{background:var(--accent)}
+.kicker{margin-top:26px;font:700 20px "DejaVu Sans Mono",monospace;letter-spacing:3px;color:var(--accent)}
+h1{font:900 60px/1.04 "DejaVu Sans Condensed","DejaVu Sans",sans-serif;text-transform:uppercase;margin:10px 0 20px;letter-spacing:-.5px;color:#f2f6fc}
+h1 em{font-style:normal;color:var(--accent)}
+canvas{display:block;border:1.5px solid #1b2740;border-radius:14px}
+ul{list-style:none;margin-top:22px}
+li{font-size:31px;line-height:1.32;padding:7px 0 7px 40px;position:relative;color:#dbe4f0}
+li:before{content:"";position:absolute;left:6px;top:20px;width:16px;height:16px;border-radius:4px;background:var(--accent)}
+li b{color:#fff}
+.rule{margin-top:18px;font:700 28px "DejaVu Sans Mono",monospace;color:#05080e;background:var(--accent);display:inline-block;padding:10px 18px;border-radius:8px}
+.foot{font-size:20px}
+.swipe{position:absolute;right:44px;bottom:84px;font:700 24px "DejaVu Sans Mono",monospace;color:var(--accent)}
+.legend{display:grid;gap:22px;margin-top:30px}
+.lg{display:flex;gap:26px;align-items:center;border:1.5px solid #1b2740;border-radius:16px;padding:26px 28px;background:rgba(12,18,32,.9)}
+.lg .c{flex:none;width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 50px "DejaVu Sans",sans-serif;color:#05080e}
+.lg h3{font:800 36px "DejaVu Sans",sans-serif;color:#fff}.lg p{font-size:27px;color:#b9c6d8;margin-top:6px;line-height:1.3}
+table{width:100%;border-collapse:collapse;margin-top:14px}
+td{padding:14px 10px;border-bottom:1px solid #1b2740;font-size:28px;vertical-align:top}
+td:first-child{color:#fff;font-weight:700;width:34%}
+td code{font:23px "DejaVu Sans Mono",monospace;color:#7fe6ff}
+pre{margin-top:22px;font:25px/1.5 "DejaVu Sans Mono",monospace;background:#03060c;border:1.5px solid #1b2740;border-radius:12px;padding:16px 20px;color:#cfe3ff}
+pre .c{color:#6b7f9e}
+.timeline{margin-top:26px;display:grid;gap:24px}
+.ev{display:flex;gap:20px;align-items:flex-start;font-size:34px;line-height:1.32}
+.ev span{flex:none;font:700 22px "DejaVu Sans Mono",monospace;color:#05080e;background:#ff4d6d;border-radius:6px;padding:6px 10px;margin-top:2px}
+.ev.g span{background:#3ddc84}
+.big{font:800 38px/1.25 "DejaVu Sans",sans-serif;color:#fff;margin-top:24px}
+.tr{display:grid;grid-template-columns:1fr 70px 1fr;gap:16px 10px;align-items:center;margin-top:30px;font-size:32px}
+.tr div{border:1.5px solid #1b2740;border-radius:10px;padding:18px 18px;background:rgba(12,18,32,.9)}
+.tr .ar{border:0;background:none;text-align:center;color:var(--accent);font-size:34px;padding:0}
+.tr .h{border:0;background:none;font:700 18px "DejaVu Sans Mono",monospace;letter-spacing:2px;color:#8a9bb2;padding:0}
+.q{margin-top:30px;font:800 40px/1.2 "DejaVu Sans",sans-serif;color:var(--accent)}
+.chain{display:flex;align-items:center;gap:8px;margin-top:30px}
+.chain div{flex:1;text-align:center;border:2px solid #ff4d6d;border-radius:10px;padding:14px 6px;font:700 19px "DejaVu Sans Mono",monospace;color:#ffd0d8;background:rgba(60,8,20,.6)}
+.chain i{color:#ff4d6d;font-style:normal;font-size:28px}
+.chain .wall{flex:none;width:12px;align-self:stretch;background:repeating-linear-gradient(45deg,#3ddc84 0 8px,#05080e 8px 14px);border:0;padding:0;border-radius:3px}
+.tip{margin-top:26px;border:2px dashed var(--accent);border-radius:12px;padding:18px 22px;font-size:28px;line-height:1.35}
+.tip b{color:var(--accent)}
+.cta{margin-top:30px;display:flex;gap:16px}.cta div{flex:1;border:1.5px solid #1b2740;border-radius:12px;padding:18px;font-size:26px;text-align:center;background:rgba(12,18,32,.9)}.cta b{display:block;font-size:40px;color:var(--accent)}
+</style></head><body>
+<div class="wrap" id="w"></div>
+<div class="foot"><span><b>Isaiah C. Anderson</b> · Security+ · SOC analyst track</span><span>github.com/N1ghtsh1ft1</span></div>
+<script src="../src/topology.js"></script>
+<script>
+const T=TOPO, ALL=Object.keys(T.N);
+const S=[
+ {kicker:'NETWORK SECURITY · 10 SLIDES', title:'I mapped every wall <em>a hacker hits</em> on the way in.', canvas:{h:700,o:{types:true,highlight:['edge','fw','waf','acc','ids','siem','proxy'],hiColor:'#ff4d6d'}},
+  bullets:['Where each security control <b>actually goes</b>','Why it goes <b>there</b>','How to build it in <b>Cisco Packet Tracer</b>'], swipe:true},
+ {kicker:'FIRST, THE 3 JOBS', title:'Every control does <em>one of three jobs.</em>', legend:true},
+ {kicker:'LAYER 1 · THE EDGE', title:'Filter early. <em>Filter cheap.</em>', canvas:{h:560,o:{types:true,view:{x:90,y:10,w:820,h:350},show:['inet','vpn','edge','fw'],zones:['edge'],highlight:['edge','vpn'],hiColor:'#ff4d6d',badges:{edge:{t:'DROP spoofed 10.x',c:'#ff4d6d'}}}},
+  bullets:['The <b>edge router ACL</b> drops obvious junk first: packets from outside claiming to be <b>private IPs</b>, ports you never use.','<b>VPN</b> lands remote users <b>at the firewall</b>, not straight inside.'], rule:'Cheap filter before the expensive one.'},
+ {kicker:'LAYER 2 · FIREWALL + IPS', title:'Inline means <em>it can say no.</em>', canvas:{h:560,o:{types:true,view:{x:90,y:110,w:820,h:400},show:['edge','fw','core','ids','vpn'],zones:['edge'],highlight:['fw'],hiColor:'#3ddc84',badges:{fw:{t:'traffic goes THROUGH',c:'#3ddc84'},ids:{t:'sees a COPY',c:'#ff9a5a'}}}},
+  bullets:['<b>IPS = inline</b>. Traffic passes through it, so it can block.','<b>IDS = passive</b>. It watches a SPAN/TAP copy. It alerts, it can’t block.','If the inline box dies: <b>fail-closed</b> (security wins) or <b>fail-open</b> (uptime wins)?']},
+ {kicker:'LAYER 3 · SCREENED SUBNET', title:'Public stuff <em>never sits inside.</em>', canvas:{h:540,o:{types:true,view:{x:400,y:180,w:600,h:300},show:['fw','waf','web','core'],zones:['dmz'],highlight:['waf','web'],hiColor:'#ffc93c',badges:{waf:{t:'blocks SQLi / XSS',c:'#ffc93c'}}}},
+  bullets:['Anything the internet can reach goes in the <b>DMZ</b>.','The <b>WAF</b> reads web requests, not just ports.','If the web server gets owned, the attacker is <b>stuck in the DMZ</b>, not in your network.']},
+ {kicker:'LAYER 4 · INSIDE', title:'No ID, <em>no network.</em>', canvas:{h:560,o:{types:true,view:{x:0,y:400,w:1000,h:390},show:['core','acc','pc1','pc2','pc3','dist','db','file','proxy'],zones:['users','servers'],highlight:['acc','proxy','dist'],hiColor:'#3ddc84',badges:{acc:{t:'802.1X at the port',c:'#3ddc84'},proxy:{t:'stops calls home',c:'#3ddc84'}}}},
+  bullets:['<b>NAC / 802.1X</b> checks devices at the switch port. Unknown laptop goes to a quarantine VLAN.','<b>VLANs + ACLs</b> keep users away from servers.','The <b>forward proxy</b> controls what goes <b>out</b> (malware calling home).']},
+ {kicker:'LAYER 5 · THE WATCHERS', title:'Detection needs <em>its own lane.</em>', canvas:{h:540,o:{types:true,view:{x:0,y:400,w:1000,h:600},show:['core','ids','msw','jump','aaa','siem','ntp'],zones:['mgmt'],highlight:['ids','siem','jump'],hiColor:'#b18cff'}},
+  bullets:['<b>IDS + SIEM</b> collect and correlate. SIEM can also <b>auto-isolate</b> a host (corrective).','<b>Mgmt VLAN</b>: admins only get in through the <b>jump box</b>, logged by <b>AAA</b>.','<b>NTP</b> matters: if clocks disagree, you can’t rebuild the timeline.']},
+ {kicker:'REAL STORY · TARGET, 2013', title:'One vendor login. <em>40M cards.</em>', story:true},
+ {kicker:'BUILD IT · CISCO PACKET TRACER', title:'Your lab, <em>layer by layer.</em>', pt:true},
+ {kicker:'TRADER’S TRANSLATION', title:'Defense in depth = <em>risk management.</em>', trade:true}
+];
+const n=+new URLSearchParams(location.search).get('s')||1, s=S[n-1], w=document.getElementById('w');
+let h=`<div class="top"><span class="series">SIGNAL &amp; NOISE</span><div class="dots">${S.map((_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div></div>
+<div class="kicker">${s.kicker}</div><h1>${s.title}</h1>`;
+if(s.canvas) h+=`<canvas id="cv" width="992" height="${s.canvas.h}"></canvas>`;
+if(s.legend) h+=`<div class="legend">
+ <div class="lg"><div class="c" style="background:#3ddc84">P</div><div><h3>Preventive: stops it</h3><p>Firewall rule, ACL, 802.1X, WAF. The door is locked.</p></div></div>
+ <div class="lg"><div class="c" style="background:#ff9a5a">D</div><div><h3>Detective: sees it</h3><p>IDS, SIEM, logs. The camera is recording.</p></div></div>
+ <div class="lg"><div class="c" style="background:#b18cff">C</div><div><h3>Corrective: fixes it</h3><p>Quarantine VLAN, auto-isolate, restore from backup. Someone changes the locks.</p></div></div></div>
+ <div class="big">Weak networks pick one. Strong networks <span style="color:var(--accent)">layer all three</span>. Watch for the P / D / C tags on every slide.</div>`;
+if(s.bullets) h+=`<ul>${s.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>`;
+if(s.rule) h+=`<div class="rule">${s.rule}</div>`;
+if(s.story) h+=`<div class="timeline">
+ <div class="ev"><span>STEP 1</span><div>Attackers phish an <b>HVAC contractor</b> and steal its login to Target’s vendor portal.</div></div>
+ <div class="ev"><span>STEP 2</span><div>From there they move across the network to the <b>checkout registers</b>. Vendor access wasn’t walled off.</div></div>
+ <div class="ev"><span>STEP 3</span><div>Card-stealing malware runs on registers. Security tools <b>raise alerts</b>, but nobody acts in time.</div></div>
+ <div class="ev"><span>RESULT</span><div>About <b>40 million cards</b> stolen, plus data on up to 70 million people.</div></div></div>
+ <div class="big" style="font-size:34px">Two fixes: <span style="color:#3ddc84">segment vendor access</span> (preventive) and <span style="color:#ff9a5a">make sure someone answers the alerts</span> (detective needs a human).</div>
+ <div class="chain"><div>HVAC<br>VENDOR</div><i>→</i><div>VENDOR<br>PORTAL</div><span class="wall"></span><i>→</i><div>INTERNAL<br>NETWORK</div><i>→</i><div>CHECKOUT<br>REGISTERS</div></div>
+ <div style="font-size:24px;color:#8a9bb2;margin-top:10px">Green line = where a segment wall should have stopped them.</div>`;
+if(s.pt) h+=`<table>
+ <tr><td>Edge ACL</td><td>ISR router: <code>ip access-list extended EDGE-IN</code></td></tr>
+ <tr><td>Firewall</td><td>ASA 5506-X: <code>nameif</code> + <code>security-level</code></td></tr>
+ <tr><td>IDS</td><td>Sniffer device on the core link</td></tr>
+ <tr><td>NAC stand-in</td><td>2960 switch: <code>port-security</code></td></tr>
+ <tr><td>AAA · Syslog · NTP</td><td>Server device, turn on each service</td></tr></table>
+<pre><span class="c">! drop spoofed private IPs at the edge</span>
+deny ip 10.0.0.0 0.255.255.255 any
+deny ip 192.168.0.0 0.0.255.255 any
+permit ip any any
+<span class="c">! one device per access port</span>
+switchport port-security maximum 1
+switchport port-security violation shutdown</pre>
+<div style="font-size:28px;color:#8a9bb2;margin-top:18px">Full step-by-step guide on my GitHub → signal-and-noise/labs</div>
+ <div class="tip"><b>Try it:</b> switch Packet Tracer to <b>Simulation mode</b>, send a ping from outside with a 10.x source, and watch the edge router drop it.</div>`;
+if(s.trade) h+=`<div class="tr">
+ <div class="h">NETWORK</div><div class="h"></div><div class="h">TRADING</div>
+ <div>Edge ACL drops junk</div><div class="ar">=</div><div>Pre-trade checklist skips bad setups</div>
+ <div>Segmentation / VLANs</div><div class="ar">=</div><div>Position size per trade</div>
+ <div>IDS / SIEM alerts</div><div class="ar">=</div><div>Price alerts + trade journal</div>
+ <div>Auto-isolate a host</div><div class="ar">=</div><div>Stop-loss + daily loss limit</div></div>
+ <div class="big" style="font-size:33px">No single layer is perfect. That’s the point. You stack them so one miss isn’t the end.</div>
+ <div class="q">Small business, one budget: which layer do you buy first?</div>
+ <div class="cta"><div><b>01</b>Comment your pick</div><div><b>02</b>Save for your next lab</div><div><b>03</b>Follow for the next layer</div></div>`;
+if(s.swipe) h+=`<div class="swipe">SWIPE →</div>`;
+w.innerHTML=h;
+if(s.canvas){const c=document.getElementById('cv'); T.draw(c.getContext('2d'),c.width,c.height,s.canvas.o);}
+document.body.style.setProperty('--accent',['#00d0ff','#00d0ff','#ff6b8a','#3ddc84','#ffc93c','#3ddc84','#b18cff','#ff4d6d','#00d0ff','#ffc93c'][n-1]);
+window.TOTAL=S.length; window.done=true;
+</script></body></html>

@@ -1,0 +1,87 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="frame.css">
+<style>
+body{width:1080px;height:1920px;--accent:#ff4d6d}
+.wrap{padding:56px 34px 0}
+.hook{font:900 64px/1.04 "DejaVu Sans Condensed","DejaVu Sans",sans-serif;text-transform:uppercase;margin:24px 0 22px;letter-spacing:-.5px;color:#f2f6fc}
+.hook em{font-style:normal;color:#ff4d6d}
+canvas{display:block;border:1.5px solid #1b2740;border-radius:14px}
+.atk{margin-top:26px;display:flex;align-items:center;gap:18px;min-height:70px}
+.atk .n:empty{display:none}.atk .n{font:800 22px "DejaVu Sans Mono",monospace;color:#05080e;background:#ff4d6d;border-radius:6px;padding:8px 12px}
+.atk .t{font:900 50px "DejaVu Sans Condensed","DejaVu Sans",sans-serif;color:#fff;text-transform:uppercase}
+.verdict{margin-top:10px;font:800 44px/1.2 "DejaVu Sans",sans-serif;min-height:60px}
+.tally{position:absolute;left:34px;right:34px;bottom:110px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tally div{border:1.5px solid #1b2740;border-radius:12px;padding:12px;text-align:center;font:700 20px "DejaVu Sans Mono",monospace;color:#8a9bb2;background:rgba(12,18,32,.9)}
+.tally b{display:block;font:900 54px "DejaVu Sans",sans-serif}
+.prog{position:absolute;left:0;bottom:0;height:8px;background:#ff4d6d}
+.foot{bottom:40px;font-size:24px}
+.end{position:absolute;left:35px;width:1012px;top:270px;height:1012px;display:none;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:rgba(5,8,14,.94);border-radius:14px}
+.end h2{font:900 72px/1.05 "DejaVu Sans Condensed","DejaVu Sans",sans-serif;text-transform:uppercase;color:#fff}
+.end h2 em{font-style:normal;color:#3ddc84}
+.end p{font-size:36px;color:#c9d5e6;margin-top:26px;max-width:860px;line-height:1.35}
+.end .q{color:#ffc93c;font-weight:800}
+</style></head><body>
+<div class="wrap">
+ <div class="topbar"><span class="series" style="background:#ff4d6d">SIGNAL &amp; NOISE</span><span class="no" style="color:#ff4d6d;border-color:#ff4d6d">THE GAUNTLET</span></div>
+ <div class="hook">6 attacks. 1 network.<br><em>Watch where each dies.</em></div>
+ <canvas id="cv" width="1012" height="1012"></canvas>
+ <div class="atk"><span class="n" id="an"></span><span class="t" id="at"></span></div>
+ <div class="verdict" id="vd"></div>
+</div>
+<div class="end" id="end"><h2>No single wall.<br><em>Layers.</em></h2><p>5 stopped at the door. 1 got in and got caught. That’s defense in depth.</p><p class="q">Which layer would you build first?</p></div>
+<div class="tally"><div><b style="color:#3ddc84" id="tb">0</b>BLOCKED</div><div><b style="color:#ff9a5a" id="td">0</b>DETECTED</div><div><b style="color:#ff4d6d" id="tl">0</b>DATA LOST</div></div>
+<div class="foot"><span><b>Isaiah C. Anderson</b></span><span>github.com/N1ghtsh1ft1</span></div>
+<div class="prog" id="prog"></div>
+<script src="../src/topology.js"></script>
+<script>
+const T=TOPO, N=T.N, cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const COL={P:'#3ddc84',D:'#ff9a5a',C:'#b18cff'};
+const A=[
+ {name:'Port scan', path:['inet','edge'], v:'Dropped at the edge router ACL', ty:'P', badge:'ACL DROP'},
+ {name:'SQL injection', path:['inet','edge','fw','waf'], v:'Blocked by the WAF before the web server', ty:'P', badge:'WAF BLOCK'},
+ {name:'Exploit attempt', path:['inet','edge','fw'], v:'IPS matches the signature and kills it inline', ty:'P', badge:'IPS BLOCK'},
+ {name:'Rogue laptop', path:['pc3','acc'], v:'802.1X says no ID → quarantine VLAN', ty:'C', badge:'QUARANTINE'},
+ {name:'Malware calling home', path:['pc1','acc','core','proxy'], v:'Proxy blocks the bad domain going out', ty:'P', badge:'PROXY BLOCK'},
+ {name:'Stolen VPN login', path:['inet','vpn','fw','core','dist','db'], v:'It gets in… but the IDS sees it and the SIEM isolates the host', ty:'D', badge:'', long:true}
+];
+const INTRO=30, STEP=75, LONG=170, OUTRO=90;
+let t0=INTRO; A.forEach(a=>{a.start=t0; a.dur=a.long?LONG:STEP; t0+=a.dur;}); const END=t0, TOTAL=END+OUTRO;
+function along(path,u){const pts=path.map(id=>N[id]); const segs=[]; let L=0; for(let i=0;i<pts.length-1;i++){const d=Math.hypot(pts[i+1].x-pts[i].x,pts[i+1].y-pts[i].y); segs.push(d); L+=d;}
+ let d=u*L; for(let i=0;i<segs.length;i++){ if(d<=segs[i]||i===segs.length-1){const f=Math.min(1,d/segs[i]); return {x:pts[i].x+(pts[i+1].x-pts[i].x)*f,y:pts[i].y+(pts[i+1].y-pts[i].y)*f};} d-=segs[i]; } }
+const ease=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+let tally={b:0,d:0,l:0};
+window.TOTAL=TOTAL;
+window.frame=function(f){
+  let cur=A.find(a=>f>=a.start&&f<a.start+a.dur);
+  const done=A.filter(a=>f>=a.start+(a.long?120:45));
+  tally={b:done.filter(a=>a.ty!=='D').length,d:done.filter(a=>a.ty==='D').length,l:0};
+  const badges={}, hi=[]; let hiColor='#ff4d6d';
+  done.forEach(a=>{ if(a.badge){ const s=a.path[a.path.length-1]; badges[s]={t:a.badge,c:COL[a.ty]}; } });
+  if(A[5].start+120<=f){ badges.ids={t:'ALERT',c:'#ff9a5a'}; badges.siem={t:'HOST ISOLATED',c:'#b18cff'}; }
+  T.draw(ctx,1012,1012,{types:true,badges,highlight:cur?[cur.path[cur.path.length-1]].concat(cur.long&&f-cur.start>95?['ids','siem']:[]):[],hiColor:cur?COL[cur.ty]:'#00d0ff',
+    over:(c)=>{
+      if(!cur) return;
+      const lt=f-cur.start, travel=cur.long?95:45, u=Math.min(1,lt/travel), p=along(cur.path,ease(u));
+      // trail
+      for(let k=1;k<=10;k++){const q=along(cur.path,ease(Math.max(0,u-k*.025))); c.fillStyle=`rgba(255,77,109,${.5-k*.045})`; c.beginPath(); c.arc(q.x,q.y,12-k*.8,0,6.283); c.fill();}
+      const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,40); g.addColorStop(0,'rgba(255,77,109,1)'); g.addColorStop(1,'rgba(255,77,109,0)');
+      c.fillStyle=g; c.beginPath(); c.arc(p.x,p.y,40,0,6.283); c.fill(); c.fillStyle='#fff'; c.beginPath(); c.arc(p.x,p.y,8,0,6.283); c.fill();
+      if(u>=1){ const k2=(lt-travel)/30, s=N[cur.path[cur.path.length-1]];
+        c.strokeStyle=COL[cur.ty]; c.lineWidth=6*(1-Math.min(1,k2)); c.beginPath(); c.arc(s.x,s.y,40+k2*120,0,6.283); c.stroke();
+        if(cur.long){ // SPAN copy pulse to IDS, then IDS -> SIEM
+          const k3=Math.min(1,(lt-travel)/25), a=N.core, b=N.ids; c.fillStyle='#ff9a5a'; c.beginPath(); c.arc(a.x+(b.x-a.x)*k3,a.y+(b.y-a.y)*k3,10,0,6.283); c.fill();
+          if(lt-travel>25){ const k4=Math.min(1,(lt-travel-25)/30), m=N.msw, sm=N.siem, pts=[N.ids,N.core,m,sm]; const tot=3; const seg=Math.min(2,Math.floor(k4*tot)), ff=k4*tot-seg;
+            const P0=pts[seg],P1=pts[seg+1]; c.fillStyle='#b18cff'; c.beginPath(); c.arc(P0.x+(P1.x-P0.x)*ff,P0.y+(P1.y-P0.y)*ff,10,0,6.283); c.fill(); }
+        }
+      }
+    }});
+  document.getElementById('an').textContent=cur?('ATTACK '+(A.indexOf(cur)+1)+'/6'):'';
+  document.getElementById('at').textContent=cur?cur.name:'';
+  const vd=document.getElementById('vd'); const showV=cur&&f-cur.start>=(cur.long?95:45);
+  vd.textContent=showV?cur.v:(cur?'…':''); vd.style.color=cur?COL[cur.ty]:'#fff';
+  document.getElementById('tb').textContent=tally.b; document.getElementById('td').textContent=tally.d; document.getElementById('tl').textContent=0;
+  document.getElementById('end').style.display=f>=END?'flex':'none';
+  document.getElementById('prog').style.width=(100*f/TOTAL)+'%';
+};
+window.ready=true;
+</script></body></html>
