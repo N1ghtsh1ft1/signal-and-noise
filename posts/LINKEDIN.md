@@ -138,3 +138,30 @@ You don't need one perfect wall. You need layers.
 Which of these 6 do you think happens most in real life?
 
 #cybersecurity #blueteam #SOCanalyst #defenseindepth #networksecurity
+
+---
+
+# Series 3: DARPA Lineage
+
+## 08 · Video: DARPA Lineage
+Upload `media/darpa-lineage-short.mp4`. Put the interactive link in the first comment: https://n1ghtsh1ft1.github.io/signal-and-noise/darpa.html
+
+The first message ever sent over the internet's ancestor was "LO."
+
+October 29, 1969. UCLA tried to send "LOGIN" to SRI. The system crashed after two letters.
+
+The same agency behind that network has been shaping how we defend networks ever since. I built 3 interactive simulations to show how:
+
+1969 · ARPANET: messages get chopped into numbered packets. Knock out a node and they find another road. Sequence numbers rebuild the message at the end.
+
+2012 · Plan X: DARPA wanted to see cyberspace like a battlefield. Sweep the network, find what's alive, what's open, and what's risky. You can't defend what you don't know is there.
+
+2016 → 2025 · Cyber Grand Challenge to the AI Cyber Challenge: machines fire millions of inputs at code, find the crash, and write the patch. At the 2025 finals, AI systems found 86% of the planted bugs.
+
+Same idea, 56 years apart: route around damage, map what you own, find the bug first.
+
+You can click around in all three. Link in the comments.
+
+Which one should I break down next?
+
+#cybersecurity #networking #DARPA #SecurityPlus #SOC #blueteam
