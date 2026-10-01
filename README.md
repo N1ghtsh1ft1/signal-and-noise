@@ -14,12 +14,20 @@ Generative art where the simulation *is* the lesson. Each piece runs a real algo
 | <img src="media/containment.gif" width="180"> | **04 · Containment**<br>Gray-Scott reaction-diffusion | Incident response: spread → contain → eradicate → recover | Daily loss limit: stop, contain, review, come back tomorrow |
 | <img src="media/packet-walk.gif" width="180"> | **05 · Packet Walk**<br>Hop-by-hop L2/L3 + NAT animation | How a packet leaves your network: MAC rewritten per hop, NAT at the edge, ACL can deny | An order gets auth + risk checks before the exchange sees it |
 
+## Series 2: Network placement of security controls
+
+| | |
+|---|---|
+| <img src="media/gauntlet.gif" width="220"> | **The Gauntlet.** 6 attacks hit one network, and each dies at a different layer: edge ACL, WAF, IPS, 802.1X, proxy. The last gets in and is caught by IDS + SIEM. ([video](media/gauntlet-short.mp4))<br><br>**Carousel.** 10 slides on where each control goes and why, Preventive / Detective / Corrective, inline vs passive, and the 2013 Target breach. ([PDF](media/control-placement-carousel.pdf))<br><br>**Lab.** Build it in Cisco Packet Tracer: [labs/control-placement](labs/control-placement/) |
+
 ## What's in here
 
 ```
 index.html          live, interactive gallery (no libraries, plain JS + canvas)
 src/pieces.js       the five simulations, all seeded and reproducible
 src/content.js      plain-language copy for each piece
+src/topology.js     reference network used by the control-placement series
+labs/               Packet Tracer lab guides
 render/             scripts that export LinkedIn cards (1080×1350) and vertical videos (1080×1920)
 media/              exported cards, vertical videos, preview GIFs
 posts/              LinkedIn captions and YouTube Shorts plan
@@ -32,6 +40,8 @@ CONCEPT.md          the idea behind the series
 pip install playwright        # uses Chromium
 python3 render/render_cards.py      # -> media/*-card.png
 python3 render/render_shorts.py     # -> media/*-short.mp4 (needs ffmpeg)
+python3 render/render_carousel.py   # -> media/control-placement-carousel.pdf (needs img2pdf)
+python3 render/render_gauntlet.py   # -> media/gauntlet-short.mp4
 ```
 
 ## Notes
