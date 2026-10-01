@@ -169,7 +169,7 @@ Which one should I break down next?
 ---
 
 ## 09 · X-style thread / LinkedIn post: Assume the backbone is compromised
-Upload `media/mosaic-short.mp4`. First comment: https://n1ghtsh1ft1.github.io/signal-and-noise/darpa.html#mosaic
+Upload `media/backbone-cinematic.mp4` (has sound). First comment: https://n1ghtsh1ft1.github.io/signal-and-noise/darpa.html#mosaic
 
 Assume the backbone is compromised.
 
@@ -194,3 +194,13 @@ I also wrote a small Python tool that runs the same test and checks the message 
 Where's the single point of failure in your network?
 
 #networking #cybersecurity #DARPA #resilience #SOC #CCNA
+
+### Optional voiceover for 09 (record on your phone, ~22 s, read over the video)
+- 0:00 "Assume the backbone is compromised."
+- 0:03 "Two networks. Same sensor, same HQ. White is static: one fixed path. Blue is mosaic: it'll use any link it can find."
+- 0:07 "Cut the fiber." (pause on the snap)
+- 0:08 "Static traffic dies right there. Mosaic reroutes over radio."
+- 0:12 "Now jam the radios." 
+- 0:13 "Mosaic jumps to satellite. Slower, but it keeps delivering."
+- 0:17 "Fix the fiber, and it's back on the fast path."
+- 0:20 "No single path. No single point of failure. Where's yours?"
